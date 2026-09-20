@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs / misc
+*.log
+npm-debug.log*
+.DS_Store
+.turbo/
+coverage/
+
+# editor
+.idea/
+.vscode/

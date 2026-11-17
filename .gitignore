@@ -23,3 +23,6 @@ coverage/
 # editor
 .idea/
 .vscode/
+
+# agent scratch
+.superpowers/

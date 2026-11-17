@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+
+allowBuilds:
+  esbuild: true
+  '@nestjs/core': false
+  msgpackr-extract: false
+  '@tailwindcss/oxide': false

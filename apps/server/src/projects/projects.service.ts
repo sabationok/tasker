@@ -43,6 +43,6 @@ export class ProjectsService {
 
   async lookup(query: string, limit = 10): Promise<LookupResult[]> {
     const rows = rankTextMatches(await this.findMany(), (r) => r.name, query, limit);
-    return rows.map((r) => ({ id: r.id, label: r.name, path: `Projects / ${r.name}` }));
+    return rows.map((r) => ({ id: r.id, label: r.name, path: `Проєкти / ${r.name}` }));
   }
 }

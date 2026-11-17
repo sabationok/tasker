@@ -26,6 +26,7 @@ import { lookupTools } from './definitions/lookup.tools';
 import { readTools } from './definitions/read.tools';
 import { mapKeys, snakePath, toCamel, toSnake } from './helpers/case-keys';
 import { toolJsonSchema, undescribedFields } from './helpers/tool-json-schema';
+import { draftChanges } from './helpers/draft-changes';
 import { PreviewService } from './services/preview/preview.service';
 import type { CallMeta, ToolDef, ToolOutcome } from './types/tool.types';
 
@@ -82,6 +83,10 @@ export class ToolsRegistry implements OnModuleInit {
     const def = this.get(name);
     if (!def) return { ok: false, errors: [{ path: '', code: 'not-found:tool', message: msg(ctx.locale, 'not-found:tool') }] };
     try {
+      if (meta.draftId && meta.discard) {
+        const d = await this._drafts.discard(meta.draftId, ctx.apiKeyId, meta.reason);
+        return { ok: true, structured: { draftId: d.id, batchId: d.batchId, status: 'discarded' } };
+      }
       if (meta.draftId) return await this.saveDraft(meta.draftId, ctx, Object.keys(rawArgs).length ? rawArgs : undefined, name);
       const parsed = def.input.safeParse(mapKeys(rawArgs, toCamel));
       if (!parsed.success) return { ok: false, errors: zodToFieldErrors(parsed.error, ctx.locale, (p) => p.map((s) => toSnake(String(s))).join('.')) };
@@ -102,13 +107,17 @@ export class ToolsRegistry implements OnModuleInit {
   }
 
   /** Re-validates a stored draft (or the given args), runs it and marks it saved. */
-  async saveDraft(draftId: string, ctx: RequestCtx, overrideArgs?: Record<string, unknown>, expectedTool?: string): Promise<ToolOutcome> {
-    const draft = await this._drafts.getPending(draftId);
+  /**
+   * Re-validates a stored draft (or edited args: snake_case from MCP, or a camelCase DTO from REST), runs it, marks it
+   * saved and records the training signal: `accepted` as is, or `edited` with the changed fields.
+   */
+  async saveDraft(draftId: string, ctx: RequestCtx, overrideArgs?: Record<string, unknown>, expectedTool?: string, editedDto?: Record<string, unknown>): Promise<ToolOutcome> {
+    const draft = await this._drafts.getPending(draftId, ctx.apiKeyId);
     const def = this.get(draft.tool);
     if (!def || (expectedTool && expectedTool !== draft.tool)) return { ok: false, errors: [{ path: 'draft_id', code: 'invalid:args', message: `The draft belongs to ${draft.tool}` }] };
     let input: Record<string, unknown> = draft.dto;
-    if (overrideArgs) {
-      const parsed = def.input.safeParse(mapKeys(overrideArgs, toCamel));
+    if (overrideArgs || editedDto) {
+      const parsed = def.input.safeParse(editedDto ?? mapKeys(overrideArgs, toCamel));
       if (!parsed.success) return { ok: false, errors: zodToFieldErrors(parsed.error, ctx.locale, (p) => p.map((s) => toSnake(String(s))).join('.')) };
       input = parsed.data as Record<string, unknown>;
     }
@@ -125,12 +134,13 @@ export class ToolsRegistry implements OnModuleInit {
       await this._drafts.release(draft);
       throw e;
     }
-    await this._drafts.setStatus(draft, 'saved', this._savedRef(result), 'saving');
+    const changes = draftChanges(draft.dto, input);
+    await this._drafts.setStatus(draft, 'saved', this._savedRef(result), 'saving', { outcome: changes.length ? 'edited' : 'accepted', changes: changes.length ? changes : null });
     return { ok: true, structured: { ...result, draftId: draft.id, batchId: draft.batchId } };
   }
 
   async saveBatch(batchId: string, ctx: RequestCtx): Promise<{ draftId: string; status: 'saved' | 'invalid' | 'skipped'; errors?: FieldError[] }[]> {
-    const drafts = await this._drafts.findByBatch(batchId);
+    const drafts = await this._drafts.findByBatch(batchId, ctx.apiKeyId);
     const out: { draftId: string; status: 'saved' | 'invalid' | 'skipped'; errors?: FieldError[] }[] = [];
     for (const d of drafts as DraftEntity[]) {
       if (d.status !== 'draft') {

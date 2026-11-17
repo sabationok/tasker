@@ -16,6 +16,7 @@ export class EventsListener implements OnModuleInit {
       await this._events.emitToKey(c.apiKeyId, {
         connector: 'tasker', type: 'draft.updated', draftId: c.draftId, batchId: c.batchId, status: c.status,
         ...(c.resultId && { itemId: c.resultId }), ...(c.resultLabel && { label: c.resultLabel }),
+        ...(c.outcome && { outcome: c.outcome }), ...(c.changes?.length && { changes: c.changes }), ...(c.reason && { reason: c.reason }),
       });
     });
   }

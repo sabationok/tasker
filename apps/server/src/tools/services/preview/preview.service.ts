@@ -36,11 +36,11 @@ export class PreviewService {
     const today = localDateOf(ctx.now, ctx.timeZone);
     if (input.projectId) {
       const p = await this._projects.getOrFail(input.projectId, true).catch(() => null);
-      if (p) refs.project_id = { id: p.id, label: p.name, path: `Projects / ${p.name}` };
+      if (p) refs.project_id = { id: p.id, label: p.name, path: `Проєкти / ${p.name}` };
     }
     if (input.categoryId) {
       const c = await this._categories.getOrFail(input.categoryId, true).catch(() => null);
-      if (c) refs.category_id = { id: c.id, label: c.name };
+      if (c) refs.category_id = { id: c.id, label: c.name, path: `Категорії / ${c.name}` };
     }
     if (input.tagIds?.length) refs.tag_ids = (await this._tags.findByIds(input.tagIds)).map((t): LookupResult => ({ id: t.id, label: t.name }));
     for (const [field, id] of [['parent_id', input.parentId], ['item_id', input.itemId]] as const) {

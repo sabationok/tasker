@@ -1,5 +1,6 @@
 import type { ZodType } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { FIELD_TITLES } from '../constants/field-titles';
 import { toSnake } from './case-keys';
 
 type Json = Record<string, unknown>;
@@ -16,7 +17,7 @@ function snakeProps(node: unknown): unknown {
   if (!node || typeof node !== 'object') return node;
   const out: Json = {};
   for (const [k, v] of Object.entries(node as Json)) {
-    if (k === 'properties' && v && typeof v === 'object') out[k] = Object.fromEntries(Object.entries(v as Json).map(([p, s]) => [toSnake(p), snakeProps(s)]));
+    if (k === 'properties' && v && typeof v === 'object') out[k] = Object.fromEntries(Object.entries(v as Json).map(([p, s]) => [toSnake(p), withTitle(snakeProps(s) as Json, p)]));
     else if (k === 'required' && Array.isArray(v)) out[k] = v.map((p) => toSnake(String(p)));
     else out[k] = snakeProps(v);
   }
@@ -34,4 +35,10 @@ export function undescribedFields(schema: Json, path = ''): string[] {
   for (const key of ['anyOf', 'oneOf', 'allOf'] as const) for (const sub of (schema[key] as Json[] | undefined) ?? []) out.push(...undescribedFields(sub, path));
   if (schema.items && typeof schema.items === 'object') out.push(...undescribedFields(schema.items as Json, `${path}[].`));
   return out;
+}
+
+/** Adds the Ukrainian `title` of a property (Mia's generic card uses it as the row key). */
+function withTitle(schema: Json, camelName: string): Json {
+  const title = FIELD_TITLES[camelName];
+  return title && !schema.title ? { title, ...schema } : schema;
 }

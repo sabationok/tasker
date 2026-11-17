@@ -22,5 +22,5 @@ export interface ToolDef<I = any> {
   run(input: I, ctx: RequestCtx): Promise<Record<string, unknown>>;
 }
 
-export type CallMeta = { dryRun?: boolean; batchId?: string; draftId?: string };
+export type CallMeta = { dryRun?: boolean; batchId?: string; draftId?: string; discard?: boolean; reason?: 'wrong_connector' | 'wrong_tool' | 'wrong_values' };
 export type ToolOutcome = { ok: true; structured: Record<string, unknown> } | { ok: false; errors: FieldError[] };

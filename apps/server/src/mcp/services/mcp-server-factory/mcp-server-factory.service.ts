@@ -81,7 +81,7 @@ export class McpServerFactoryService {
 
   /** `tasker://drafts/<batchId>`: the key's drafts of the batch (contract §6 shape, camelCase like the envelope). */
   async batchState(batchId: string, apiKeyId: string): Promise<{ batchId: string; drafts: { draftId: string; status: string; itemId?: string; label?: string }[] }> {
-    const rows = /^[0-9a-f-]{36}$/i.test(batchId) ? await this._drafts.findByBatch(batchId) : [];
+    const rows = /^[0-9a-f-]{36}$/i.test(batchId) ? await this._drafts.findByBatch(batchId, apiKeyId) : [];
     return {
       batchId,
       drafts: rows

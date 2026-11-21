@@ -63,3 +63,12 @@ export function defineScreenTools<const T extends Record<string, ToolDef>>(scree
     },
   };
 }
+
+/** Logs every screen's declared tools at boot (one table, screen by screen); the page's whole tool list, in any host. */
+export function logScreenTools(): void {
+  const rows = [...SCREEN_TOOLS].flatMap(([screen, specs]) =>
+    specs.map((t) => ({ screen, name: t.name, title: t.annotations.title ?? '', saves: !t.annotations.readOnlyHint, deletes: !!t.annotations.destructiveHint })),
+  );
+  console.info(`[page-agent] ${rows.length} page tools on ${SCREEN_TOOLS.size} screens:\n${rows.map((r) => `${r.screen} · ${r.name}`).join('\n')}`);
+  console.table(rows);
+}

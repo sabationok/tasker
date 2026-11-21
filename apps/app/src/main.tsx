@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { host } from '@/lib/host';
 import { queryClient } from '@/lib/query-client';
 import { startPageLifecycle } from '@/lib/page-agent/lifecycle';
+import { logScreenTools } from '@/lib/page-agent/registry';
 import { startCloseGuard } from '@/lib/close-guard';
 import { showToast, ToastProvider } from '@/ui';
 import { router } from '@/app/router';
@@ -17,6 +18,7 @@ import './index.css';
 async function boot() {
   applyTheme();
   startCloseGuard();
+  logScreenTools();
   const sessionError = await host.openSession((path, body) => api.post(path, body));
   startPageLifecycle(host.agent, queryClient, { width: MIN_APP_WIDTH, height: MIN_APP_HEIGHT });
   createRoot(document.getElementById('root')!).render(

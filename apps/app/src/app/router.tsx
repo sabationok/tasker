@@ -40,5 +40,9 @@ export const router = createBrowserRouter(
     },
     { path: '*', element: <Navigate to="/today" replace /> },
   ],
-  { basename: import.meta.env.BASE_URL.replace(/\/$/, '') },
+  {
+    basename: import.meta.env.BASE_URL.replace(/\/$/, ''),
+    // v7 behaviour now (silences the future-flag warnings); the app uses no actions, fetchers or SSR.
+    future: { v7_relativeSplatPath: true, v7_fetcherPersist: true, v7_normalizeFormMethod: true, v7_partialHydration: true, v7_skipActionErrorRevalidation: true },
+  },
 );

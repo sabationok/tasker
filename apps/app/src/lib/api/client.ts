@@ -8,6 +8,13 @@ import { ApiError, NETWORK_ERROR, type FieldError } from './api-error';
  */
 const BASE = import.meta.env.VITE_TASKER_API_BASE ?? (import.meta.env.DEV ? '/api' : '');
 
+/**
+ * Whether this build has an API at all: the dev proxy, an explicit base, or the tasker server serving the page at
+ * /assistant/app/. A static copy elsewhere (GitHub Pages without TASKER_API_BASE) has none, so calls fail fast as
+ * `network:unreachable` instead of hitting the static host.
+ */
+const HAS_API = !!BASE || import.meta.env.BASE_URL === '/assistant/app/';
+
 type Query = Record<string, string | number | boolean | null | undefined>;
 
 function toQs(q?: Query): string {
@@ -21,6 +28,7 @@ function toQs(q?: Query): string {
 async function request<T>(method: string, path: string, opts: { query?: Query; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+  if (!HAS_API) throw new ApiError(0, NETWORK_ERROR.unreachable, 'No network: the tasker API is not reachable');
   if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new ApiError(0, NETWORK_ERROR.offline, 'No network: the device is offline');
   let res: Response;
   try {

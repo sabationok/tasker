@@ -4,7 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>tasker</title>
-    <script src="https://telegram.org/js/telegram-web-app.js" async></script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Telegram's bridge only inside Telegram (its launch hash or webview proxy); elsewhere it just logs postEvent noise. -->
+    <script>
+      if (/tgWebAppData=/.test(location.hash) || window.TelegramWebviewProxy) {
+        var s = document.createElement('script');
+        s.src = 'https://telegram.org/js/telegram-web-app.js';
+        s.async = true;
+        document.head.appendChild(s);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

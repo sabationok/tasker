@@ -11,3 +11,10 @@ export class ApiError extends Error {
     super(message);
   }
 }
+
+/**
+ * The API could not be reached: the device is offline, the request failed, or something other than the tasker API
+ * answered (a static host's 404 page, a captive portal). Nothing was read or saved.
+ */
+export const NETWORK_ERROR = { offline: 'network:offline', unreachable: 'network:unreachable' } as const;
+export const isNetworkError = (e: unknown): e is ApiError => e instanceof ApiError && e.innerCode.startsWith('network:');

@@ -125,6 +125,7 @@ function createHost() {
     const ctx = payload as PageAgentContext | undefined;
     const label = call === 'provideContext' && ctx ? `${ctx.screen} · ${ctx.tools.length} tools: ${ctx.tools.map((t) => t.name).join(', ')}` : '';
     console.info(`[page-agent] ${call}${bridge?.agent ? '' : ' (no host: no-op)'} ${label}`, payload ?? '');
+    if (call === 'provideContext' && ctx) console.table(ctx.tools.map((t) => ({ name: t.name, title: t.annotations.title ?? '', saves: !t.annotations.readOnlyHint })));
   };
   const initData = bridge?.initData || readInitDataFromHash() || null;
   return {

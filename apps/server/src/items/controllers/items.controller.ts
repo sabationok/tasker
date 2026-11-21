@@ -20,6 +20,7 @@ import {
   type SplitTaskInput,
   type UpdateItemInput,
 } from '../dto/item.schemas';
+import { ItemAssignmentsService } from '../services/item-assignments';
 import { ItemOccurrencesService } from '../services/item-occurrences';
 import { ItemThreadsService } from '../services/item-threads';
 import { ItemsService } from '../services/items';
@@ -32,6 +33,7 @@ export class ItemsController {
     private readonly _occurrences: ItemOccurrencesService,
     private readonly _threads: ItemThreadsService,
     private readonly _views: ItemViewsService,
+    private readonly _assignments: ItemAssignmentsService,
   ) {}
 
   @Get('many')
@@ -39,9 +41,10 @@ export class ItemsController {
     return AppResponse.ok(await this._items.findMany(q));
   }
 
-  @Get('next-task')
-  async nextTask() {
-    return AppResponse.ok(await this._items.nextTask());
+  /** The calling agent's open items (403 for a caller that is not an agent). */
+  @Get('assignments')
+  async assignments(@Ctx() ctx: RequestCtx) {
+    return AppResponse.ok({ items: await this._assignments.mine(ctx) });
   }
 
   @Get()

@@ -1,28 +1,28 @@
 import type { ReactNode } from 'react';
 import { tr } from '@/i18n';
-import { cn } from '@/lib/cn';
 import { Badge } from '../primitives/badge';
-import { FlexRow, FlexSection } from '../layout/flex';
+import { Text } from '../primitives/text';
+import { FlexRow } from '../layout/flex';
+import { Surface } from './surface';
 
 /**
  * @ui SectionCard
- * @spec A form / page block on a surface: title, optional «required» / «optional» marker, actions slot, body.
+ * @spec A form / page block: heading, optional «required» / «optional» marker, actions slot, body — on a Surface.
  * @keywords section, card, panel, group, block
  */
-export function SectionCard({ title, marker, actions, children, className }: { title?: string; marker?: 'required' | 'optional'; actions?: ReactNode; children: ReactNode; className?: string }) {
+export function SectionCard({ title, marker, actions, children }: { title?: string; marker?: 'required' | 'optional'; actions?: ReactNode; children: ReactNode }) {
   return (
-    <FlexSection gap="md" className={cn('rounded-2xl bg-surface p-4', className)}>
+    <Surface as="section">
       {(title || actions) && (
         <FlexRow justify="between">
           <FlexRow>
-            {title && <h2 className="text-[17px] font-semibold">{title}</h2>}
-            {marker && <Badge tone={marker === 'required' ? 'danger' : 'warning'}>{tr(marker)}</Badge>}
+            {title && <Text variant="heading">{title}</Text>}
+            {marker && <Badge tone={marker === 'required' ? 'caution' : 'neutral'}>{tr(marker)}</Badge>}
           </FlexRow>
           {actions}
         </FlexRow>
       )}
       {children}
-    </FlexSection>
+    </Surface>
   );
 }
-

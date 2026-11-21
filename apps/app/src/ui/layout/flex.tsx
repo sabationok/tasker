@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { ElementType, JSX } from 'react';
 import { cn } from '@/lib/cn';
 
@@ -51,3 +52,10 @@ export const FlexUl = createFlex('ul');
 export const FlexLi = createFlex('li', { dir: 'row', align: 'center', gap: 'sm' });
 export const FlexForm = createFlex('form');
 export const FlexSection = createFlex('section');
+
+/** @ui ScrollRow @spec A horizontally scrolling row bleeding to the page edges (chips, filters). @keywords scroll row, chips row, horizontal scroll */
+export const ScrollRow = ({ children, label }: { children: React.ReactNode; label?: string }) => (
+  <div role="group" aria-label={label} className="no-scrollbar -mx-page flex flex-row items-center gap-2 overflow-x-auto px-page">
+    {children}
+  </div>
+);

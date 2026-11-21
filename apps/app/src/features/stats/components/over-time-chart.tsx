@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { intlLocale } from '@/i18n';
 import { parseIsoDate } from '@/lib/dates';
+import { ChartTooltip, FlexBox, Text } from '@/ui';
 import type { StatsView } from '@/contracts/tasker';
 
 const W = 320;
@@ -45,7 +46,7 @@ export function OverTimeChart({ points }: { points: StatsView['overTime'] }) {
           <line key={g} x1={0} x2={W} y1={y(g)} y2={y(g)} stroke="var(--t-line)" strokeWidth={1} />
         ))}
         {[1, 0].map((g) => (
-          <text key={g} x={-4} y={y(g) + 3} textAnchor="end" fontSize={9} fill="var(--t-muted)">
+          <text key={g} x={-4} y={y(g) + 3} textAnchor="end" fontSize="var(--t-text-micro)" fill="var(--t-muted)">
             {g * 100}%
           </text>
         ))}
@@ -63,15 +64,15 @@ export function OverTimeChart({ points }: { points: StatsView['overTime'] }) {
         )}
       </svg>
       {hp && (
-        <div className="pointer-events-none absolute top-0 left-0 rounded-lg border border-line bg-surface px-2 py-1 text-xs shadow">
-          {fmt.format(parseIsoDate(hp.date))}: <span className="font-medium tabular-nums">{hp.rate === null ? '—' : `${Math.round(hp.rate * 100)}%`}</span>
-        </div>
+        <ChartTooltip corner="left">
+          <Text variant="caption" numeric>{`${fmt.format(parseIsoDate(hp.date))}: ${hp.rate === null ? '—' : `${Math.round(hp.rate * 100)}%`}`}</Text>
+        </ChartTooltip>
       )}
       {n > 0 && (
-        <div className="flex justify-between text-[11px] text-muted">
-          <span>{fmt.format(parseIsoDate(points[0].date))}</span>
-          <span>{fmt.format(parseIsoDate(points[n - 1].date))}</span>
-        </div>
+        <FlexBox dir="row" justify="between">
+          <Text variant="caption" tone="muted">{fmt.format(parseIsoDate(points[0].date))}</Text>
+          <Text variant="caption" tone="muted">{fmt.format(parseIsoDate(points[n - 1].date))}</Text>
+        </FlexBox>
       )}
     </div>
   );

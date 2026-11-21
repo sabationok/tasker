@@ -1,0 +1,7 @@
+/** tasker's own icon (square, any size): a tick on stacked cards. Served at `/.well-known/connector-icon.svg`. */
+export const CONNECTOR_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<rect width="64" height="64" rx="14" fill="#1F3A5F"/>
+<rect x="14" y="20" width="36" height="30" rx="6" fill="#F2B544" opacity=".35"/>
+<rect x="12" y="15" width="36" height="30" rx="6" fill="#F7F4EC"/>
+<path d="M21 30l6 6 12-12" fill="none" stroke="#1F3A5F" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;

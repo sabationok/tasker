@@ -1,3 +1,5 @@
+import { UI_MANIFEST } from '../../../ui-manifest/ui-manifest';
+import { MCP_RESOURCE_URIS } from '../../constants/context-text';
 import { randomUUID } from 'node:crypto';
 import { Injectable, Logger, type OnApplicationBootstrap, type OnModuleDestroy } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
@@ -83,6 +85,10 @@ export class McpSessionsService implements OnApplicationBootstrap, OnModuleDestr
   async onApplicationBootstrap(): Promise<void> {
     const hash = this._tools.schemaHash();
     const settings = await this._settings.get();
+    if (settings.uiManifestVersion !== UI_MANIFEST.version) {
+      await this._settings.update({ uiManifestVersion: UI_MANIFEST.version });
+      await Promise.all([...this._sessions.values()].filter((s) => s.subscriptions.has(MCP_RESOURCE_URIS.uiManifest)).map((s) => s.server.sendResourceUpdated({ uri: MCP_RESOURCE_URIS.uiManifest }).catch(() => undefined)));
+    }
     if (settings.toolsSchemaHash === hash) return;
     await this._settings.update({ toolsSchemaHash: hash });
     await this.notifyToolsChanged();

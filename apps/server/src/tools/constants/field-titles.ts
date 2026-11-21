@@ -1,6 +1,6 @@
 /** Ukrainian field titles for tool input schemas (the keys of Mia's generic card). Keys are camelCase input names. */
 export const FIELD_TITLES: Record<string, string> = {
-  type: 'Тип', title: 'Назва', name: 'Назва', body: 'Опис', description: 'Опис', status: 'Статус', owner: 'Виконавець',
+  type: 'Тип', title: 'Назва', name: 'Назва', body: 'Опис', description: 'Опис', status: 'Статус', assignee: 'Виконавець',
   priority: 'Пріоритет', categoryId: 'Категорія', projectId: 'Проєкт', tagIds: 'Теги', date: 'Дата', dueAt: 'Термін',
   remindAt: 'Нагадати', pending: 'Щодня до виконання', parentId: 'Батьківська задача', recurrence: 'Повторення',
   startsOn: 'Початок', endsOn: 'Кінець', evaluation: 'Оцінка', subtasksOrder: 'Порядок потоків', checklist: 'Чекліст',

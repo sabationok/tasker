@@ -12,7 +12,9 @@ export interface ToolDef<I = any> {
   description: string;
   input: ZodType<I, ZodTypeDef, unknown>;
   annotations: { readOnlyHint: boolean; destructiveHint: boolean; idempotentHint?: boolean };
-  meta: { actions: ToolAction[]; keywords: string[]; lookup?: Record<string, string>; lookupArg?: 'query'; schemaVersion: number };
+  meta: { actions: ToolAction[]; keywords: string[]; lookup?: Record<string, string>; lookupArg?: 'query'; schemaVersion: number;
+    /** Acts only on items assigned to the calling agent, enforced by the server; a hub may skip the confirm card. */
+    selfScoped?: boolean };
   /** Write tools: semantic validation (references exist, dates, locks). */
   check?(input: I, ctx: RequestCtx): Promise<FieldError[]>;
   /** Write tools: what the card shows for this input. */

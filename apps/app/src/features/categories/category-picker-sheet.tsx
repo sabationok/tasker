@@ -15,7 +15,7 @@ export function CategoryPickerSheet({ open, onClose, value, onChange }: { open: 
           onChange(id);
           onClose();
         }}
-        options={categories.map((c) => ({ value: c.id, label: c.name, leading: <CategoryIcon category={c} size={32} /> }))}
+        options={categories.map((c) => ({ value: c.id, label: c.name, leading: <CategoryIcon category={c} size="sm" /> }))}
       />
     </Sheet>
   );

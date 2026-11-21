@@ -1,54 +1,73 @@
 @import 'tailwindcss';
+@import './ui/theme/tokens.css';
 
 /* Dark mode follows the host (`data-theme` on <html>), not only the OS. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
+/* Tailwind utilities over the theme tokens: `bg-surface`, `rounded-card`, `text-body`, `h-control`, `p-card`, `shadow-overlay` … */
 @theme {
   --color-bg: var(--t-bg);
   --color-surface: var(--t-surface);
-  --color-surface-2: var(--t-surface-2);
+  --color-sunken: var(--t-surface-sunken);
   --color-line: var(--t-line);
   --color-fg: var(--t-fg);
   --color-muted: var(--t-muted);
   --color-accent: var(--t-accent);
   --color-accent-fg: var(--t-accent-fg);
   --color-accent-soft: var(--t-accent-soft);
-  --color-success: var(--t-success);
-  --color-danger: var(--t-danger);
-  --color-warning: var(--t-warning);
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-}
+  --color-selected: var(--t-selected-bg);
+  --color-selected-fg: var(--t-selected-fg);
+  --color-positive: var(--t-positive);
+  --color-negative: var(--t-negative);
+  --color-caution: var(--t-caution);
+  --color-neutral: var(--t-neutral);
+  --color-progress: var(--t-progress);
+  --color-tag-violet: var(--t-tag-violet);
+  --color-tag-violet-ink: var(--t-tag-violet-ink);
+  --color-tag-rose: var(--t-tag-rose);
+  --color-tag-rose-ink: var(--t-tag-rose-ink);
+  --color-tag-mint: var(--t-tag-mint);
+  --color-tag-mint-ink: var(--t-tag-mint-ink);
+  --color-tag-amber: var(--t-tag-amber);
+  --color-tag-amber-ink: var(--t-tag-amber-ink);
+  --color-tag-sky: var(--t-tag-sky);
+  --color-tag-sky-ink: var(--t-tag-sky-ink);
+  --color-tag-grey: var(--t-tag-grey);
+  --color-tag-grey-ink: var(--t-tag-grey-ink);
+  --color-priority-high: var(--t-priority-high);
+  --color-priority-mid: var(--t-priority-mid);
+  --color-priority-low: var(--t-priority-low);
+  --color-done: var(--t-done-bg);
+  --color-done-fg: var(--t-done-fg);
+  --color-open: var(--t-open-border);
 
-:root {
-  --t-bg: #f4f4f7;
-  --t-surface: #ffffff;
-  --t-surface-2: #f0f0f4;
-  --t-line: #e4e4ea;
-  --t-fg: #17171c;
-  --t-muted: #74747f;
-  --t-accent: #4f46e5;
-  --t-accent-fg: #ffffff;
-  --t-accent-soft: #ecebfd;
-  --t-success: #30a46c;
-  --t-danger: #e5484d;
-  --t-warning: #d18a00;
-  color-scheme: light;
-}
+  --radius-control: var(--t-radius-control);
+  --radius-card: var(--t-radius-card);
+  --radius-sheet: var(--t-radius-sheet);
+  --radius-pill: var(--t-radius-pill);
 
-:root[data-theme='dark'] {
-  --t-bg: #0f0f13;
-  --t-surface: #1a1a20;
-  --t-surface-2: #24242c;
-  --t-line: #2e2e38;
-  --t-fg: #ededf2;
-  --t-muted: #9a9aa6;
-  --t-accent: #7c74ff;
-  --t-accent-fg: #ffffff;
-  --t-accent-soft: #26244a;
-  --t-success: #3dd68c;
-  --t-danger: #ff6369;
-  --t-warning: #f5b544;
-  color-scheme: dark;
+  --shadow-raised: var(--t-shadow-raised);
+  --shadow-overlay: var(--t-shadow-overlay);
+
+  --font-sans: var(--t-font);
+  --text-title: var(--t-text-title);
+  --text-heading: var(--t-text-heading);
+  --text-body: var(--t-text-body);
+  --text-label: var(--t-text-label);
+  --text-caption: var(--t-text-caption);
+  --text-micro: var(--t-text-micro);
+  --font-weight-strong: var(--t-weight-strong);
+  --font-weight-medium: var(--t-weight-medium);
+
+  --spacing-control: var(--t-control-h);
+  --spacing-control-sm: var(--t-control-h-sm);
+  --spacing-control-lg: var(--t-control-h-lg);
+  --spacing-icon-btn: var(--t-icon-btn);
+  --spacing-toggle: var(--t-toggle);
+  --spacing-tile: var(--t-tile);
+  --spacing-page: var(--t-pad-page);
+  --spacing-card: var(--t-pad-card);
+  --spacing-row: var(--t-pad-row);
 }
 
 html,
@@ -61,9 +80,15 @@ body {
   margin: 0;
   background: var(--t-bg);
   color: var(--t-fg);
-  font-family: var(--font-sans);
+  font-family: var(--t-font);
+  font-size: var(--t-text-body);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--t-focus);
+  outline-offset: 2px;
 }
 
 dialog::backdrop {

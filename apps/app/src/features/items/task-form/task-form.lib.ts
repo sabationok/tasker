@@ -1,6 +1,6 @@
 import { isoToLocalInput, localInputToIso, today } from '@/lib/dates';
 import type { PriorityValue } from '@/components/priority';
-import type { ItemEvaluation, ItemInput, ItemView, Recurrence } from '@/contracts/tasker';
+import { USER_ASSIGNEE, type ItemEvaluation, type ItemInput, type ItemView, type Recurrence } from '@/contracts/tasker';
 
 export type TaskFormValues = {
   title: string;
@@ -18,9 +18,11 @@ export type TaskFormValues = {
   hasEnd: boolean;
   endsOn: string;
   evaluation: ItemEvaluation;
+  /** `me` or an agent slug. */
+  assignee: string;
 };
 
-export function toTaskFormData(item: ItemView | undefined, opts: { periodic: boolean; date?: string; categoryId?: string }): TaskFormValues {
+export function toTaskFormData(item: ItemView | undefined, opts: { periodic: boolean; date?: string; categoryId?: string; assignee?: string }): TaskFormValues {
   const periodic = item ? !!item.recurrence : opts.periodic;
   return {
     title: item?.title ?? '',
@@ -37,6 +39,7 @@ export function toTaskFormData(item: ItemView | undefined, opts: { periodic: boo
     hasEnd: !!item?.endsOn,
     endsOn: item?.endsOn ?? '',
     evaluation: item?.evaluation ?? 'yes_no',
+    assignee: item?.assignee ?? opts.assignee ?? USER_ASSIGNEE,
   };
 }
 
@@ -47,6 +50,7 @@ export function toTaskReqData(v: TaskFormValues): ItemInput {
     body: v.body.trim() || null,
     priority: v.priority || null,
     categoryId: v.categoryId,
+    assignee: v.assignee,
     checklist: v.checklist.filter((c) => c.title.trim()).map((c) => ({ ...(c.id ? { id: c.id } : {}), title: c.title.trim() })),
   };
   const reminders = v.reminders.filter(Boolean);

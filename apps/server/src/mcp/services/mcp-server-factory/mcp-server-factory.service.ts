@@ -11,6 +11,8 @@ import {
   SubscribeRequestSchema,
   UnsubscribeRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { AgentsService } from '../../../agents/agents.service';
+import { ApiKeysService } from '../../../api-keys/api-keys.service';
 import type { RequestCtx } from '../../../common/context/request-context';
 import { DraftsService } from '../../../drafts/drafts.service';
 import { SettingsService } from '../../../settings/settings.service';
@@ -21,6 +23,7 @@ import { MCP_CONTEXT_TEXT, MCP_RESOURCE_URIS } from '../../constants/context-tex
 import { readRequestMeta, type McpRequestMeta } from '../../helpers/read-request-meta';
 import { toolResult } from '../../helpers/tool-result';
 import { SERVER_VERSION } from '../../constants/server-version';
+import { UI_MANIFEST } from '../../../ui-manifest/ui-manifest';
 
 /** Builds the low-level MCP `Server` of one session: tools from the registry, the context / today / drafts resources. */
 @Injectable()
@@ -30,6 +33,8 @@ export class McpServerFactoryService {
     private readonly _settings: SettingsService,
     private readonly _today: TodayService,
     private readonly _drafts: DraftsService,
+    private readonly _keys: ApiKeysService,
+    private readonly _agents: AgentsService,
   ) {}
 
   create(apiKeyId: string, subscriptions: Set<string>): Server {
@@ -48,6 +53,7 @@ export class McpServerFactoryService {
       resources: [
         { uri: MCP_RESOURCE_URIS.context, name: 'context', description: 'What tasker holds (for routing)', mimeType: 'text/plain' },
         { uri: MCP_RESOURCE_URIS.today, name: 'today', description: "Today's tasks, periodic tasks and habits", mimeType: 'application/json' },
+        { uri: MCP_RESOURCE_URIS.uiManifest, name: 'ui-manifest', description: "The mini app's screens and page actions (names, schemas, persists); versioned", mimeType: 'application/json' },
       ],
     }));
     server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({
@@ -61,6 +67,7 @@ export class McpServerFactoryService {
         const today = await this._today.get(undefined, await this._ctx(apiKeyId, { dryRun: false }));
         return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(mapKeys(JSON.parse(JSON.stringify(today)), toSnake)) }] };
       }
+      if (uri === MCP_RESOURCE_URIS.uiManifest) return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(UI_MANIFEST) }] };
       if (uri.startsWith(MCP_RESOURCE_URIS.draftsPrefix)) {
         const batchId = uri.slice(MCP_RESOURCE_URIS.draftsPrefix.length);
         return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(await this.batchState(batchId, apiKeyId)) }] };
@@ -80,18 +87,23 @@ export class McpServerFactoryService {
   }
 
   /** `tasker://drafts/<batchId>`: the key's drafts of the batch (contract §6 shape, camelCase like the envelope). */
-  async batchState(batchId: string, apiKeyId: string): Promise<{ batchId: string; drafts: { draftId: string; status: string; itemId?: string; label?: string }[] }> {
+  async batchState(batchId: string, apiKeyId: string): Promise<{ batchId: string; drafts: { draftId: string; status: string; itemId?: string; label?: string; outcome?: string; changes?: unknown[]; reason?: string }[] }> {
     const rows = /^[0-9a-f-]{36}$/i.test(batchId) ? await this._drafts.findByBatch(batchId, apiKeyId) : [];
     return {
       batchId,
       drafts: rows
         .filter((d) => d.apiKeyId === apiKeyId)
-        .map((d) => ({ draftId: d.id, status: d.status, tool: d.tool, ...(d.resultId && { itemId: d.resultId }), ...(d.resultLabel && { label: d.resultLabel }) })),
+        .map((d) => ({
+          draftId: d.id, status: d.status, tool: d.tool, ...(d.resultId && { itemId: d.resultId }), ...(d.resultLabel && { label: d.resultLabel }),
+          ...(d.outcome && { outcome: d.outcome }), ...(d.changes?.length && { changes: d.changes }), ...(d.reason && { reason: d.reason }),
+        })),
     };
   }
 
   private async _ctx(apiKeyId: string, meta: McpRequestMeta): Promise<RequestCtx> {
     const settings = await this._settings.get();
-    return { apiKeyId, timeZone: meta.timeZone ?? settings.timezone, locale: meta.locale ?? settings.locale, now: new Date() };
+    const key = await this._keys.getActive(apiKeyId);
+    const agentSlug = await this._agents.slugOfKey(apiKeyId, key?.name);
+    return { apiKeyId, agentSlug, timeZone: meta.timeZone ?? settings.timezone, locale: meta.locale ?? settings.locale, now: new Date() };
   }
 }

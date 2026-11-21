@@ -1,10 +1,12 @@
 import { z } from 'zod';
+import { AGENT_SLUG, CONNECTOR_SLUG, CONNECTOR_TOOL } from '../../agents/types/agent.types';
 import { recurrenceSchema } from '../../recurrence/recurrence.schema';
 import { reminderInputSchema } from '../../reminders/dto/reminder-input.schema';
-import { ITEM_EVALUATIONS, ITEM_OWNERS, ITEM_STATUSES, ITEM_TYPES, OCCURRENCE_STATUSES, SUBTASKS_ORDERS } from '../types/item.types';
+import { ITEM_EVALUATIONS, ITEM_STATUSES, ITEM_TYPES, OCCURRENCE_STATUSES, SUBTASKS_ORDERS } from '../types/item.types';
 
 const localDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 const uuid = z.string().uuid();
+const assignee = z.string().regex(AGENT_SLUG, 'me or an agent slug');
 
 export const checklistInputSchema = z
   .array(
@@ -23,7 +25,9 @@ const itemFields = {
   title: z.string().min(1).max(200).describe("Short title in the user's words, without date words"),
   body: z.string().max(20000).nullable().optional().describe('Longer description'),
   status: z.enum(ITEM_STATUSES).optional().describe('Workflow status; default todo'),
-  owner: z.enum(ITEM_OWNERS).optional().describe('me = the user does it; claude = an agent may take it via next_task'),
+  assignee: assignee.optional().describe("Whose to-do it is: me = the user (default), or an agent's slug (resolved with find_agents)"),
+  connector: z.string().regex(CONNECTOR_SLUG).nullable().optional().describe("For an agent's to-do: the connector to work in, e.g. fintrack (the body says what to check and why; recurrence + a timeOfDay reminder make it regular)"),
+  connectorTools: z.array(z.string().regex(CONNECTOR_TOOL)).min(1).max(10).nullable().optional().describe("With connector: that connector's tools this to-do uses, picked from its tool list so the task matches what the connector can do"),
   priority: z.union([z.literal(1), z.literal(2), z.literal(3)]).nullable().optional().describe('1 = high, 3 = low; only when stated'),
   categoryId: uuid.optional().describe('Life area (resolved with find_categories); default Other'),
   projectId: uuid.nullable().optional().describe('Work project (resolved with find_projects)'),
@@ -61,7 +65,8 @@ export const findManyItemsSchema = z
     categoryId: uuid.optional().describe('Only this category'),
     projectId: uuid.optional().describe('Only this project'),
     parentId: uuid.optional().describe('Threads of this parent'),
-    owner: z.enum(ITEM_OWNERS).optional().describe('Only this owner'),
+    assignee: assignee.optional().describe("Only items assigned to: me, or an agent's slug"),
+    createdBy: assignee.optional().describe("Only items made by: me, or an agent's slug"),
     periodic: z.coerce.boolean().optional().describe('true = periodic tasks only, false = single only'),
     search: z.string().max(200).optional().describe('Words in the title, or #123'),
     limit: z.coerce.number().int().min(1).max(200).default(50).describe('Page size'),

@@ -1,14 +1,17 @@
 import { useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useCloseGuard } from '@/lib/close-guard';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
 import { tr } from '@/i18n';
 import { host } from '@/lib/host';
 import { Button, FlexForm, QueryState, showToast } from '@/ui';
 import { FormHeader } from '@/components/form-header';
-import { useDefaultCategory } from '@/features/categories/categories.queries';
+import { usePageAgent } from '@/lib/page-agent';
+import { useCategories, useDefaultCategory } from '@/features/categories/categories.queries';
 import type { ItemView } from '@/contracts/tasker';
-import { useCreateItem, useDeleteItem, useItem, useUpdateItem } from '../items.queries';
+import { useCreateItem, useDeleteItem, useItem, useSplitItem, useUpdateItem } from '../items.queries';
+import { taskFormScope } from '../assistant/task-form.tools';
+import { useAgents } from '@/features/agents/agents.queries';
 import { toTaskFormData, toTaskReqData, type TaskFormValues } from './task-form.lib';
 import { GeneralSection } from './sections/general-section';
 import { RemindersSection } from './sections/reminders-section';
@@ -38,6 +41,7 @@ function TaskForm({ item }: { item?: ItemView }) {
     [item, sp, defaultCategory?.id],
   );
   const form = useForm<TaskFormValues>({ defaultValues: defaults });
+  useCloseGuard(form.formState.isDirty);
   useEffect(() => {
     if (!form.getValues('categoryId') && defaultCategory) form.setValue('categoryId', defaultCategory.id);
   }, [defaultCategory, form]);
@@ -60,19 +64,39 @@ function TaskForm({ item }: { item?: ItemView }) {
     navigate(-1);
   }
 
+  const categories = useCategories();
+  const agents = useAgents();
+  const split = useSplitItem();
+  form.watch(); // re-render on every change, so the agent's context follows the form
+  usePageAgent(
+    taskFormScope({
+      form,
+      item,
+      categories,
+      agents,
+      onValid,
+      split: split.mutateAsync,
+      remove: async () => {
+        await remove.mutateAsync(item!.id);
+        navigate(-1);
+      },
+      close: () => navigate(-1),
+    }),
+  );
+
   const title = item ? tr('Edit task') : periodic ? tr('New periodic task') : tr('Create task');
   return (
     <FormProvider {...form}>
       <FlexForm id={FORM_ID} gap="md" onSubmit={form.handleSubmit(onValid)} noValidate>
         <FormHeader title={title} formId={FORM_ID} saving={create.isPending || update.isPending} />
-        <GeneralSection />
+        <GeneralSection connector={item ? { connector: item.connector, connectorTools: item.connectorTools } : undefined} />
         {periodic && <PeriodicSection />}
         <RemindersSection />
         <ChecklistSection />
         <OtherSection />
         {item && !periodic && !item.parentId && <ThreadsSection item={item} />}
         {item && (
-          <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={onDelete} loading={remove.isPending}>
+          <Button variant="danger" icon="delete" onClick={onDelete} loading={remove.isPending}>
             {tr('Delete')}
           </Button>
         )}

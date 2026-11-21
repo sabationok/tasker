@@ -45,11 +45,12 @@ export class ItemOccurrencesService {
     return this._checkScheduled(t, ctx);
   }
 
-  async complete(input: CompleteItemInput, ctx: RequestCtx): Promise<ItemView> {
+  /** `note` (a periodic task only): kept on that day's occurrence, e.g. what an agent's regular check found. */
+  async complete(input: CompleteItemInput, ctx: RequestCtx, note?: string): Promise<ItemView> {
     await this._throwIf(this.check(input, ctx));
     const item = await this._items.findOneByOrFail({ id: input.id });
     await this._ds.transaction(async (m) => {
-      if (item.recurrence) return this._upsert(m, this._target(item, input, ctx), { status: 'done', doneAt: new Date() });
+      if (item.recurrence) return this._upsert(m, this._target(item, input, ctx), { status: 'done', doneAt: new Date(), ...(note && { note }) });
       const children = (await this._threads.childrenOf([item.id], m)).get(item.id) ?? [];
       const open = children.filter((c) => c.status !== 'done');
       if (open.length) await m.update(ItemEntity, { id: In(open.map((c) => c.id)) }, { status: 'done', doneAt: new Date() });

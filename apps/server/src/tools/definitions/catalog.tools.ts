@@ -36,7 +36,7 @@ export const catalogTools = (d: ToolDeps): ToolDef[] => [
     meta: { actions: ['update'], keywords: ['налаштування', 'settings'], schemaVersion: 1 },
     noDraft: true,
     run: async (i) => {
-      const { toolsSchemaHash: _, ...settings } = await d.settings.update(i);
+      const { toolsSchemaHash: _, uiManifestVersion: __, ...settings } = await d.settings.update(i);
       return { settings };
     },
   },

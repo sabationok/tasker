@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { GitBranch, Lock } from 'lucide-react';
 import { tr } from '@/i18n';
-import { Badge, Button, FlexBox, FlexRow, Input, Segmented, SectionCard, showToast } from '@/ui';
+import { Badge, Button, Divider, FlexBox, FlexRow, Icon, Inset, Input, Segmented, SectionCard, showToast, Text } from '@/ui';
 import { ListEditor } from '@/components/list-editor';
 import type { ItemView, SubtasksOrder } from '@/contracts/tasker';
 import { useItems, useSplitItem } from '../../items.queries';
@@ -29,8 +28,7 @@ export function ThreadsSection({ item }: { item: ItemView }) {
       marker="optional"
       actions={
         item.threads && (
-          <Badge tone="accent">
-            <GitBranch className="size-3" />
+          <Badge tone="accent" icon="threads">
             {item.threads.done}/{item.threads.total}
           </Badge>
         )
@@ -39,17 +37,22 @@ export function ThreadsSection({ item }: { item: ItemView }) {
       {existing.length > 0 ? (
         <FlexBox gap="xs">
           {existing.map((t) => (
-            <FlexRow key={t.id} justify="between" className="rounded-xl border border-line px-3 py-2.5">
-              <span className={t.status === 'done' ? 'text-muted line-through' : ''}>{t.title}</span>
-              {t.locked && <Lock className="size-4 text-muted" aria-label={tr('Locked')} />}
-            </FlexRow>
+            <Inset key={t.id}>
+              <FlexRow justify="between">
+                <Text strike={t.status === 'done'}>{t.title}</Text>
+                {t.locked && <Icon name="locked" label={tr('Locked')} />}
+              </FlexRow>
+            </Inset>
           ))}
         </FlexBox>
       ) : (
-        <p className="text-sm text-muted">{tr('Split this task into threads to see them here.')}</p>
+        <Text variant="label" tone="muted">
+          {tr('Split this task into threads to see them here.')}
+        </Text>
       )}
-      <FlexBox gap="sm" className="border-t border-line pt-3">
-        <span className="text-sm font-medium">{tr('Split into threads')}</span>
+      <Divider />
+      <FlexBox gap="sm">
+        <Text variant="strong">{tr('Split into threads')}</Text>
         <Segmented
           value={order}
           onChange={setOrder}

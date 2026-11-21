@@ -8,4 +8,5 @@ export type Settings = {
   failedMode: FailedMode;
   weekStart: 1 | 7;
   toolsSchemaHash?: string;
+  uiManifestVersion?: string;
 };

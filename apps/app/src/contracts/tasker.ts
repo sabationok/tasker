@@ -25,6 +25,11 @@ export type Freq = Recurrence['freq'];
 
 export type ReminderView = { id: string; at: string | null; timeOfDay: string | null; offsetMin: number | null };
 export type ReminderInput = { at: string } | { timeOfDay: string } | { offsetMin: number };
+/** `me` = the user; anything else is an agent's slug. */
+export const USER_ASSIGNEE = 'me';
+export type Assignee = string;
+/** An agent the user works with (Claude, Mia, …): `icon` is a glyph, `color` a hex. */
+export type AgentView = { slug: string; name: string; icon: string | null; color: string | null; description: string | null };
 export type ChecklistLine = { id: string; title: string; position: number; done: boolean };
 
 export type ItemView = {
@@ -52,6 +57,14 @@ export type ItemView = {
   reminders: ReminderView[];
   threads: { done: number; total: number } | null;
   locked: boolean;
+  /** Whose to-do it is: `me` (the user) or an agent's slug. */
+  assignee: Assignee;
+  /** Who made it: `me` or the agent whose key created it (set by the server). */
+  createdBy: Assignee;
+  /** The hub connector an agent's to-do is about (e.g. `fintrack`); filled by the hub, read-only here. */
+  connector: string | null;
+  /** That connector's tools the to-do uses (matched by the hub). */
+  connectorTools: string[] | null;
 };
 
 export type ItemInput = {
@@ -68,6 +81,8 @@ export type ItemInput = {
   evaluation?: ItemEvaluation;
   checklist?: { id?: string; title: string }[];
   reminders?: ReminderInput[];
+  /** `me` or an agent slug; an unknown slug fails with `not-found:agent`. */
+  assignee?: Assignee;
 };
 
 export type SplitInput = { id: string; order: SubtasksOrder; threads: { title: string; date?: string }[] };
@@ -173,7 +188,7 @@ export type StatsView = {
   overTime: { date: string; rate: number | null }[];
 };
 
-export type DraftStatus = 'draft' | 'saved' | 'discarded' | 'expired';
+export type DraftStatus = 'draft' | 'saving' | 'saved' | 'discarded' | 'expired';
 export type DraftPreview = { refs: Record<string, unknown>; computed: Record<string, string>; warnings: string[] };
 export type DraftView = {
   id: string;
@@ -183,7 +198,13 @@ export type DraftView = {
   preview: DraftPreview | null;
   status: DraftStatus;
   resultId: string | null;
+  resultLabel: string | null;
+  /** Training signal (server): accepted as is / edited / dismissed; `changes` = edited fields; `reason` = why dismissed. */
+  outcome?: 'accepted' | 'edited' | 'dismissed' | null;
+  changes?: { field: string; from: unknown; to: unknown }[] | null;
+  reason?: 'wrong_connector' | 'wrong_tool' | 'wrong_values' | null;
   createdAt: string;
   expiresAt: string;
 };
-export type SaveBatchResult = { draftId: string; status: 'saved' | 'invalid' | 'skipped'; errors?: { path?: string; message: string }[] }[];
+export type DraftFieldError = { path?: string; code?: string; message: string };
+export type SaveBatchResult = { draftId: string; status: 'saved' | 'invalid' | 'skipped'; errors?: DraftFieldError[] }[];

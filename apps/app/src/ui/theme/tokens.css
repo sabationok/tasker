@@ -1,0 +1,132 @@
+/*
+ * THE THEME. Every colour, radius, shadow, type size and control size the app uses is a `--t-*` variable here.
+ * Screens never pick visual values; primitives read these through the Tailwind utilities mapped in `theme.css`.
+ * Swapping the design system = replacing this file (and `icons.tsx` for the icon set). Nothing else should need to change.
+ *
+ * Current values: plain and neutral on purpose (user, 2026-11-17: «мінімальне») — system font, light cards, one accent.
+ * The redesign from the user's references is on hold; it lands here when it resumes.
+ */
+
+:root {
+  /* surfaces & ink */
+  --t-bg: #f3f4f6;
+  --t-surface: #ffffff;
+  --t-surface-sunken: #f1f2f5;
+  --t-line: #e6e8ec;
+  --t-fg: #14161a;
+  --t-muted: #7a808c;
+
+  /* interaction */
+  --t-accent: #2f5bd3;
+  --t-accent-fg: #ffffff;
+  --t-accent-soft: #e9eefb;
+  --t-progress: var(--t-accent);
+  --t-selected-bg: var(--t-accent);
+  --t-selected-fg: var(--t-accent-fg);
+  --t-focus: var(--t-accent);
+
+  /* semantic status (charts, badges, messages) */
+  --t-positive: #23845a;
+  --t-negative: #c43c4c;
+  --t-caution: #a86a0b;
+  --t-neutral: #9aa0aa;
+
+  /* pastel tags: background + ink per hue */
+  --t-tag-violet: #efeafe;
+  --t-tag-violet-ink: #6b4fd8;
+  --t-tag-rose: #fde8ea;
+  --t-tag-rose-ink: #c43c4c;
+  --t-tag-mint: #e3f6ec;
+  --t-tag-mint-ink: #23845a;
+  --t-tag-amber: #fdf1dc;
+  --t-tag-amber-ink: #a86a0b;
+  --t-tag-sky: #e5f0fd;
+  --t-tag-sky-ink: #2f6bc4;
+  --t-tag-grey: #f1f2f5;
+  --t-tag-grey-ink: #6b717c;
+
+  /* priority mark */
+  --t-priority-high: #e5484d;
+  --t-priority-mid: #f5a524;
+  --t-priority-low: #30a46c;
+
+  /* done control */
+  --t-done-bg: var(--t-accent);
+  --t-done-fg: var(--t-accent-fg);
+  --t-open-border: var(--t-line);
+
+
+  /* shape */
+  --t-radius-control: 8px;
+  --t-radius-card: 12px;
+  --t-radius-sheet: 16px;
+  --t-radius-pill: 9999px;
+  --t-border-width: 1px;
+
+  /* elevation */
+  --t-shadow-raised: 0 1px 2px rgb(16 24 40 / 0.06);
+  --t-shadow-overlay: 0 12px 32px rgb(16 24 40 / 0.14);
+
+  /* type */
+  --t-font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --t-text-title: 20px;
+  --t-text-heading: 17px;
+  --t-text-body: 15px;
+  --t-text-label: 13px;
+  --t-text-caption: 12px;
+  --t-text-micro: 11px;
+  --t-weight-strong: 600;
+  --t-weight-medium: 500;
+
+  /* sizes & spacing */
+  --t-control-h: 44px;
+  --t-control-h-sm: 32px;
+  --t-control-h-lg: 48px;
+  --t-icon-btn: 36px;
+  --t-toggle: 28px;
+  --t-tile: 36px;
+  --t-pad-page: 16px;
+  --t-pad-card: 16px;
+  --t-pad-row: 12px;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --t-bg: #121212;
+  --t-surface: #1c1c1c;
+  --t-surface-sunken: #262626;
+  --t-line: #333333;
+  --t-fg: #ededed;
+  --t-muted: #9a9a9a;
+  --t-accent: #7c9cff;
+  --t-accent-fg: #0f1320;
+  --t-accent-soft: #1f2740;
+  --t-positive: #6fbf96;
+  --t-negative: #e07a7a;
+  --t-caution: #d6b45a;
+  --t-neutral: #7a7a7a;
+  --t-progress: #3fcf8e;
+  --t-tag-violet: #2a2340;
+  --t-tag-violet-ink: #b3a1ff;
+  --t-tag-rose: #3a1f24;
+  --t-tag-rose-ink: #ff8b95;
+  --t-tag-mint: #17322a;
+  --t-tag-mint-ink: #6fdcaa;
+  --t-tag-amber: #382b14;
+  --t-tag-amber-ink: #f5c66b;
+  --t-tag-sky: #18283d;
+  --t-tag-sky-ink: #8ab8ff;
+  --t-tag-grey: #262626;
+  --t-tag-grey-ink: #a3a3a3;
+  --t-shadow-raised: none;
+  --t-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+/* Category tile. `--tile-color` is the category's colour from the API, set on the element by IconTile;
+   the theme decides how much of it shows (here: the glyph only, on a neutral tile). */
+[data-tile] {
+  background: var(--t-surface-sunken);
+  color: var(--tile-color, var(--t-muted));
+}

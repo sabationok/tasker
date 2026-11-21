@@ -17,7 +17,7 @@ import { periodOf } from '../../../recurrence/helpers/period-of';
 import { scheduledSlots } from '../../../recurrence/helpers/scheduled-slots';
 import type { Recurrence } from '../../../recurrence/recurrence.schema';
 import { SettingsService } from '../../../settings/settings.service';
-import type { TodayEntry, TodayView } from '../../types/today.types';
+import type { TodayEntry, TodayFilter, TodayView } from '../../types/today.types';
 
 type Done = { date: string; done: boolean };
 
@@ -35,9 +35,11 @@ export class TodayService {
     private readonly _settings: SettingsService,
   ) {}
 
-  async get(date: string | undefined, ctx: RequestCtx, categoryId?: string): Promise<TodayView> {
+  async get(date: string | undefined, ctx: RequestCtx, filter: TodayFilter = {}): Promise<TodayView> {
+    const { categoryId, assignee } = filter;
     const day = date ?? localDateOf(ctx.now, ctx.timeZone);
-    const entries = (await this.entriesBetween(day, day, ctx)).get(day) ?? [];
+    const all = (await this.entriesBetween(day, day, ctx)).get(day) ?? [];
+    const entries = assignee ? all.filter((e) => e.assignee === assignee) : all;
     const cats = await this._categories.findMany();
     const counts = new Map<string, number>();
     for (const e of entries) if (e.category) counts.set(e.category.id, (counts.get(e.category.id) ?? 0) + 1);
@@ -86,7 +88,7 @@ export class TodayService {
         const done = it.status === 'done' && (!it.pending || doneDay === null || doneDay <= d);
         const l = lines.get(it.id) ?? [];
         out.get(d)?.push({
-          source: 'task', key: it.id, itemId: it.id, shortId: it.shortId, date: d, title: it.title, type: 'task', category: cat(it.categoryId), priority: it.priority,
+          source: 'task', key: it.id, itemId: it.id, shortId: it.shortId, date: d, title: it.title, type: 'task', category: cat(it.categoryId), assignee: it.assignee, priority: it.priority,
           ...(l.length && { checklist: { done: l.filter((x) => x.doneAt).length, total: l.length } }),
           ...(threadCounts.get(it.id) && { threads: threadCounts.get(it.id) }),
           done, ...(done && { status: 'done' as const }), ...(pendingDay && !done && { late: true }),
@@ -105,7 +107,7 @@ export class TodayService {
       const push = (d: string, slot: number, row = rowAt(d, slot), occurrenceDate = d) => {
         const ticked = row ? l.filter((x) => row.checklistDone.includes(x.id)).length : 0;
         out.get(d)?.push({
-          source: 'occurrence', key: `${it.id}:${occurrenceDate}:${slot}`, itemId: it.id, shortId: it.shortId, date: d, ...(occurrenceDate !== d && { occurrenceDate }), ...(it.recurrence?.freq === 'hourly' && { slot }), title: it.title, type: 'task', category: cat(it.categoryId), priority: it.priority,
+          source: 'occurrence', key: `${it.id}:${occurrenceDate}:${slot}`, itemId: it.id, shortId: it.shortId, date: d, ...(occurrenceDate !== d && { occurrenceDate }), ...(it.recurrence?.freq === 'hourly' && { slot }), title: it.title, type: 'task', category: cat(it.categoryId), assignee: it.assignee, priority: it.priority,
           ...(l.length && { checklist: { done: ticked, total: l.length } }),
           done: row?.status === 'done', ...(row?.status && { status: row.status }),
         });
@@ -139,7 +141,7 @@ export class TodayService {
 
   private _habitEntry(h: HabitEntity, date: string, slot: number, row: { status: 'done' | 'skipped' | 'failed' | null; value: number | null; checklistDone: string[] } | null, total: number, category: CategoryRef | null): TodayEntry {
     return {
-      source: 'habit', key: `${h.id}:${date}:${slot}`, habitId: h.id, shortId: h.shortId, date, ...(h.recurrence.freq === 'hourly' && { slot }), title: h.name, type: 'habit', category, priority: h.priority,
+      source: 'habit', key: `${h.id}:${date}:${slot}`, habitId: h.id, shortId: h.shortId, date, ...(h.recurrence.freq === 'hourly' && { slot }), title: h.name, type: 'habit', category, assignee: 'me', priority: h.priority,
       ...(h.evaluation === 'checklist' && { checklist: { done: row?.checklistDone.length ?? 0, total } }),
       habit: { evaluation: h.evaluation, value: row?.value ?? null, target: h.targetValue, unit: h.unit },
       done: row?.status === 'done', ...(row?.status && { status: row.status }),

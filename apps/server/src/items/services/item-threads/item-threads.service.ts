@@ -62,7 +62,7 @@ export class ItemThreadsService {
       const ids: string[] = [];
       for (const [i, t] of input.threads.entries()) {
         const child = await m.save(
-          m.create(ItemEntity, { type: 'task', title: t.title, date: t.date ?? parent.date, categoryId: parent.categoryId, projectId: parent.projectId, owner: parent.owner, parentId: parent.id, position: start + i, status: 'todo' }),
+          m.create(ItemEntity, { type: 'task', title: t.title, date: t.date ?? parent.date, categoryId: parent.categoryId, projectId: parent.projectId, assignee: parent.assignee, createdBy: parent.createdBy, parentId: parent.id, position: start + i, status: 'todo' }),
         );
         if (t.checklist?.length) await this._checklist.replaceForItem(m, child.id, t.checklist);
         ids.push(child.id);

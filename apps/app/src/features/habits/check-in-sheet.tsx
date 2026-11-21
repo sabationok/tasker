@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Check } from 'lucide-react';
 import { tr } from '@/i18n';
-import { cn } from '@/lib/cn';
-import { FlexBox, Field, Input, Sheet, Spinner, Textarea, type SheetAction } from '@/ui';
+import { FlexBox, Field, Input, Sheet, Spinner, Textarea, ToggleRow, type SheetAction } from '@/ui';
 import type { CheckInInput, HabitEvaluation, TodayEntry } from '@/contracts/tasker';
 import { useCheckIn, useCheckins, useHabit } from './habits.queries';
 
@@ -72,18 +70,7 @@ export function CheckInSheet({ entry, onClose }: { entry: TodayEntry | null; onC
             <FlexBox gap="xs">
               {(habit?.checklist ?? []).map((line) => {
                 const on = ticked.includes(line.id);
-                return (
-                  <button
-                    key={line.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setTicked((t) => (on ? t.filter((x) => x !== line.id) : [...t, line.id]))}
-                    className="flex items-center justify-between rounded-xl border border-line bg-surface px-3 py-3 text-left"
-                  >
-                    <span>{line.title}</span>
-                    <span className={cn('flex size-6 items-center justify-center rounded-full', on ? 'bg-success text-white' : 'border-2 border-line')}>{on && <Check className="size-4" />}</span>
-                  </button>
-                );
+                return <ToggleRow key={line.id} label={line.title} on={on} onToggle={() => setTicked((t) => (on ? t.filter((x) => x !== line.id) : [...t, line.id]))} />;
               })}
             </FlexBox>
           )}

@@ -1,5 +1,7 @@
+import { env } from '../config/env';
 import { createHash } from 'node:crypto';
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { AgentsService } from '../agents/agents.service';
 import { CategoriesService } from '../categories/categories.service';
 import { ChecklistService } from '../checklist/checklist.service';
 import type { RequestCtx } from '../common/context/request-context';
@@ -11,6 +13,7 @@ import { DraftsService } from '../drafts/drafts.service';
 import type { DraftEntity } from '../drafts/entities/draft.entity';
 import { HabitCheckinsService } from '../habits/services/habit-checkins';
 import { HabitsService } from '../habits/services/habits';
+import { ItemAssignmentsService } from '../items/services/item-assignments';
 import { ItemOccurrencesService } from '../items/services/item-occurrences';
 import { ItemThreadsService } from '../items/services/item-threads';
 import { ItemsService } from '../items/services/items';
@@ -19,6 +22,7 @@ import { SettingsService } from '../settings/settings.service';
 import { StatsService } from '../stats/services/stats';
 import { TagsService } from '../tags/tags.service';
 import { TodayService } from '../today/services/today';
+import { assignmentTools } from './definitions/assignments.tools';
 import { catalogTools } from './definitions/catalog.tools';
 import { habitTools } from './definitions/habits.tools';
 import { itemTools } from './definitions/items.tools';
@@ -27,6 +31,7 @@ import { readTools } from './definitions/read.tools';
 import { mapKeys, snakePath, toCamel, toSnake } from './helpers/case-keys';
 import { toolJsonSchema, undescribedFields } from './helpers/tool-json-schema';
 import { draftChanges } from './helpers/draft-changes';
+import { TOOL_MODULE_OF, TOOL_MODULES } from './constants/tool-modules';
 import { PreviewService } from './services/preview/preview.service';
 import type { CallMeta, ToolDef, ToolOutcome } from './types/tool.types';
 
@@ -40,6 +45,8 @@ export class ToolsRegistry implements OnModuleInit {
 
   constructor(
     private readonly _items: ItemsService,
+    private readonly _assignments: ItemAssignmentsService,
+    private readonly _agents: AgentsService,
     private readonly _occurrences: ItemOccurrencesService,
     private readonly _threads: ItemThreadsService,
     private readonly _checklist: ChecklistService,
@@ -56,13 +63,19 @@ export class ToolsRegistry implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    const deps = { items: this._items, occurrences: this._occurrences, threads: this._threads, checklist: this._checklist, habits: this._habits, checkins: this._checkins, projects: this._projects, categories: this._categories, tags: this._tags, today: this._today, stats: this._stats, settings: this._settings, preview: this._preview };
-    this._tools = [...lookupTools(deps), ...readTools(deps), ...itemTools(deps), ...habitTools(deps), ...catalogTools(deps)];
+    const deps = { items: this._items, occurrences: this._occurrences, threads: this._threads, checklist: this._checklist, habits: this._habits, checkins: this._checkins, projects: this._projects, categories: this._categories, tags: this._tags, today: this._today, assignments: this._assignments, agents: this._agents, stats: this._stats, settings: this._settings, preview: this._preview };
+    this._tools = [...lookupTools(deps), ...readTools(deps), ...assignmentTools(deps), ...itemTools(deps), ...habitTools(deps), ...catalogTools(deps)];
     this._listed = this._tools.map((t) => {
       const inputSchema = toolJsonSchema(t.input);
       const missing = undescribedFields(inputSchema);
       if (missing.length) throw new Error(`Tool ${t.name}: fields without description: ${missing.join(', ')}`);
-      return { name: t.name, description: t.description, inputSchema, annotations: t.annotations, _meta: { ...t.meta } };
+      const moduleId = TOOL_MODULE_OF[t.name];
+      if (!moduleId) throw new Error(`Tool ${t.name}: no module in TOOL_MODULE_OF`);
+      // a hub skips the card for selfScoped: it must be a write the server itself confines to the caller's items
+      if (t.meta.selfScoped && (t.annotations.readOnlyHint || !t.check || !t.noDraft)) throw new Error(`Tool ${t.name}: selfScoped needs a write with check and noDraft`);
+      const writes = !t.annotations.readOnlyHint && Boolean(t.check) && !t.noDraft;
+      const module = { id: moduleId, description: TOOL_MODULES[moduleId] };
+      return { name: t.name, description: t.description, inputSchema, annotations: t.annotations, _meta: { ...t.meta, module, ...(writes && { ui: { app: env.MINI_APP_URL } }) } };
     });
   }
 

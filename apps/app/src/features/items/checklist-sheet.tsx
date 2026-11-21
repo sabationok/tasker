@@ -1,7 +1,5 @@
-import { Check } from 'lucide-react';
 import { tr } from '@/i18n';
-import { cn } from '@/lib/cn';
-import { FlexBox, QueryState, Sheet } from '@/ui';
+import { FlexBox, QueryState, Sheet, ToggleRow } from '@/ui';
 import { useItem, useToggleChecklist } from './items.queries';
 
 /**
@@ -18,21 +16,8 @@ export function ChecklistSheet({ itemId, title, onClose }: { itemId: string | nu
       <QueryState isLoading={item.isLoading} error={item.error}>
         <FlexBox gap="xs">
           {(item.data?.checklist ?? []).map((line) => {
-            const on = line.done;
             const busy = toggle.isPending && toggle.variables?.id === line.id;
-            return (
-              <button
-                key={line.id}
-                type="button"
-                aria-pressed={on}
-                disabled={busy}
-                onClick={() => toggle.mutate({ id: line.id }, { onSuccess: () => item.refetch() })}
-                className="flex items-center justify-between rounded-xl border border-line bg-surface px-3 py-3 text-left disabled:opacity-50"
-              >
-                <span className={on ? 'text-muted line-through' : ''}>{line.title}</span>
-                <span className={cn('flex size-6 items-center justify-center rounded-full', on ? 'bg-success text-white' : 'border-2 border-line')}>{on && <Check className="size-4" />}</span>
-              </button>
-            );
+            return <ToggleRow key={line.id} label={line.title} on={line.done} busy={busy} onToggle={() => toggle.mutate({ id: line.id }, { onSuccess: () => item.refetch() })} />;
           })}
         </FlexBox>
       </QueryState>

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { findManyHabitsSchema } from '../../habits/dto/habit.schemas';
 import { findManyItemsSchema } from '../../items/dto/item.schemas';
 import { statsQuerySchema } from '../../stats/stats.controller';
+import { AGENT_SLUG } from '../../agents/types/agent.types';
 import type { ToolDef } from '../types/tool.types';
 import type { ToolDeps } from './tool-deps';
 
@@ -12,10 +13,10 @@ export const readTools = (d: ToolDeps): ToolDef[] => [
   {
     name: 'get_today',
     description: "Show a day's plan: tasks, periodic tasks and habits with progress (default today).",
-    input: z.object({ date: localDate.optional().describe('The day, YYYY-MM-DD; default today'), categoryId: z.string().uuid().optional().describe('Only this category (resolved with find_categories)') }).strict(),
+    input: z.object({ date: localDate.optional().describe('The day, YYYY-MM-DD; default today'), categoryId: z.string().uuid().optional().describe('Only this category (resolved with find_categories)'), assignee: z.string().regex(AGENT_SLUG).optional().describe("Only to-dos of: me (the user; habits are always mine), or an agent's slug (resolved with find_agents)") }).strict(),
     annotations: read,
-    meta: { actions: ['read'], keywords: ['сьогодні', 'план', 'що на сьогодні', 'today'], lookup: { category_id: 'find_categories' }, schemaVersion: 1 },
-    run: async (i, ctx) => ({ ...(await d.today.get(i.date, ctx, i.categoryId)) }),
+    meta: { actions: ['read'], keywords: ['сьогодні', 'план', 'що на сьогодні', 'today'], lookup: { category_id: 'find_categories', assignee: 'find_agents' }, schemaVersion: 2 },
+    run: async (i, ctx) => ({ ...(await d.today.get(i.date, ctx, { categoryId: i.categoryId, assignee: i.assignee })) }),
   },
   {
     name: 'get_item',
@@ -56,13 +57,5 @@ export const readTools = (d: ToolDeps): ToolDef[] => [
     annotations: read,
     meta: { actions: ['read'], keywords: ['статистика', 'прогрес', 'успішність', 'stats'], schemaVersion: 1 },
     run: async (i, ctx) => ({ ...(await d.stats.get(i, ctx)) }),
-  },
-  {
-    name: 'next_task',
-    description: "Take the next task assigned to an agent (owner claude): marks it doing and returns it.",
-    input: z.object({}).strict(),
-    annotations: read,
-    meta: { actions: ['read'], keywords: ['наступна задача', 'next task'], schemaVersion: 1 },
-    run: async () => ({ item: await d.items.nextTask() }),
   },
 ];

@@ -1,9 +1,9 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { X } from 'lucide-react';
 import { tr } from '@/i18n';
 import { FlexBox, FlexRow } from '../layout/flex';
 import { IconButton } from '../primitives/icon-button';
 import { Button, type ButtonVariant } from '../primitives/button';
+import { Text } from '../primitives/text';
 
 /**
  * @ui Sheet
@@ -26,13 +26,13 @@ export function Sheet({ open, onClose, title, children, actions }: { open: boole
       ref={ref}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="m-0 mt-auto max-h-[85vh] w-full max-w-none rounded-t-3xl bg-bg p-0 text-fg sm:mx-auto sm:max-w-md"
+      className="m-0 mt-auto max-h-[85vh] w-full max-w-none rounded-t-sheet bg-bg p-0 text-fg shadow-overlay sm:mx-auto sm:max-w-md"
     >
       {open && (
-        <FlexBox gap="md" className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <FlexBox gap="md" className="p-card pb-[max(var(--t-pad-card),env(safe-area-inset-bottom))]">
           <FlexRow justify="between">
-            <h2 className="text-lg font-semibold">{title}</h2>
-            <IconButton label={tr('Close')} icon={<X className="size-4" />} onClick={onClose} />
+            <Text variant="heading">{title}</Text>
+            <IconButton label={tr('Close')} icon="close" onClick={onClose} />
           </FlexRow>
           <div className="max-h-[60vh] overflow-y-auto">{children}</div>
           {actions && actions.length > 0 && <SheetFooter actions={actions} />}
@@ -47,7 +47,7 @@ export function SheetFooter({ actions }: { actions: SheetAction[] }) {
   return (
     <FlexRow gap="sm">
       {actions.map((a) => (
-        <Button key={a.label} variant={a.variant ?? 'primary'} size="lg" block className="min-w-0 flex-1 px-2" onClick={a.onClick} loading={a.loading} disabled={a.disabled} type={a.type ?? 'button'} form={a.form}>
+        <Button key={a.label} variant={a.variant ?? 'primary'} size="lg" block onClick={a.onClick} loading={a.loading} disabled={a.disabled} type={a.type ?? 'button'} form={a.form}>
           {a.label}
         </Button>
       ))}

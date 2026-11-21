@@ -10,13 +10,13 @@ export class SettingsController {
 
   @Get()
   async get() {
-    const { toolsSchemaHash: _, ...settings } = await this._settings.get();
+    const { toolsSchemaHash: _, uiManifestVersion: __, ...settings } = await this._settings.get();
     return AppResponse.ok(settings);
   }
 
   @Put('update')
   async update(@Body(new ZodPipe(updateSettingsSchema)) dto: UpdateSettingsInput) {
-    const { toolsSchemaHash: _, ...settings } = await this._settings.update(dto);
+    const { toolsSchemaHash: _, uiManifestVersion: __, ...settings } = await this._settings.update(dto);
     return AppResponse.ok(settings);
   }
 }

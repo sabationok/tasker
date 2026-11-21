@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { Brackets, DataSource, EntityManager, In, IsNull, LessThan, Not, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, In, IsNull, Not, Repository } from 'typeorm';
+import { AgentsService } from '../../../agents/agents.service';
 import { CategoriesService } from '../../../categories/categories.service';
 import { ChecklistService } from '../../../checklist/checklist.service';
 import type { RequestCtx } from '../../../common/context/request-context';
@@ -35,6 +36,7 @@ export class ItemsService {
     private readonly _reminders: RemindersService,
     private readonly _threads: ItemThreadsService,
     private readonly _views: ItemViewsService,
+    private readonly _agents: AgentsService,
   ) {}
 
   async checkCreate(input: CreateItemInput, ctx: RequestCtx): Promise<FieldError[]> {
@@ -66,7 +68,8 @@ export class ItemsService {
         type: input.type,
         title: input.title,
         status: input.status ?? 'todo',
-        owner: input.owner ?? 'me',
+        assignee: input.assignee ?? 'me',
+        createdBy: ctx.agentSlug ?? 'me',
         categoryId: input.categoryId ?? (await this._categories.defaultId()),
         doneAt: input.status === 'done' ? new Date() : null,
       });
@@ -88,7 +91,7 @@ export class ItemsService {
       const row = await m.findOneOrFail(ItemEntity, { where: { id: input.id }, relations: { tags: true } });
       const oldParent = row.parentId;
       Object.assign(row, this._columns(input, ctx));
-      for (const key of ['type', 'title', 'owner', 'categoryId'] as const) if (input[key] !== undefined) Object.assign(row, { [key]: input[key] });
+      for (const key of ['type', 'title', 'assignee', 'categoryId'] as const) if (input[key] !== undefined) Object.assign(row, { [key]: input[key] });
       const closing = input.status === 'done' && row.status !== 'done';
       const dueMoved = input.dueAt !== undefined && (row.dueAt?.toISOString() ?? null) !== (input.dueAt ? new Date(input.dueAt).toISOString() : null);
       if (input.status !== undefined && input.status !== row.status) {
@@ -144,7 +147,8 @@ export class ItemsService {
     if (q.categoryId) qb.andWhere('i.category_id = :c', { c: q.categoryId });
     if (q.projectId) qb.andWhere('i.project_id = :p', { p: q.projectId });
     if (q.parentId) qb.andWhere('i.parent_id = :pa', { pa: q.parentId }).orderBy('i.position', 'ASC');
-    if (q.owner) qb.andWhere('i.owner = :o', { o: q.owner });
+    if (q.assignee) qb.andWhere('i.assignee = :as', { as: q.assignee });
+    if (q.createdBy) qb.andWhere('i.created_by = :cb', { cb: q.createdBy });
     if (q.periodic !== undefined) qb.andWhere(q.periodic ? 'i.recurrence IS NOT NULL' : 'i.recurrence IS NULL');
     const short = q.search ? /^#?(\d+)$/.exec(q.search.trim())?.[1] : undefined;
     if (short) qb.andWhere('i.short_id = :s', { s: Number(short) });
@@ -172,24 +176,6 @@ export class ItemsService {
     return this._views.one(id);
   }
 
-  /** Oldest actionable `todo` for an agent (owner claude), or a `doing` one idle for 24 h; marks it `doing`. */
-  async nextTask(): Promise<ItemView | null> {
-    const stale = new Date(Date.now() - 24 * 3600_000);
-    const candidates = await this._repo.find({
-      where: [
-        { owner: 'claude', status: 'todo', type: 'task', recurrence: IsNull() },
-        { owner: 'claude', status: 'doing', type: 'task', recurrence: IsNull(), updatedAt: LessThan(stale) },
-      ],
-      order: { createdAt: 'ASC' },
-      take: 50,
-    });
-    const locked = await this._threads.lockedIds(candidates);
-    const next = candidates.find((c) => !locked.has(c.id));
-    if (!next) return null;
-    await this._repo.update(next.id, { status: 'doing' });
-    return this._views.one(next.id);
-  }
-
   private async _check(input: CreateItemInput | UpdateItemInput, shape: ItemShape, ctx: RequestCtx, current?: ItemEntity): Promise<FieldError[]> {
     const errors: FieldError[] = [];
     const L = ctx.locale;
@@ -198,6 +184,12 @@ export class ItemsService {
     if (input.categoryId) await this._categories.getOrFail(input.categoryId).catch(() => errors.push({ path: 'categoryId', code: 'not-found:category', message: msg(L, 'not-found:category') }));
     if (input.projectId) await this._projects.getOrFail(input.projectId).catch(() => errors.push({ path: 'projectId', code: 'not-found:project', message: msg(L, 'not-found:project') }));
     errors.push(...(await this._tags.checkIds(input.tagIds)));
+    errors.push(...(await this._agents.checkAssignee(input.assignee, 'assignee', L)));
+    const connector = input.connector !== undefined ? input.connector : (current?.connector ?? null);
+    const tools = input.connectorTools !== undefined ? input.connectorTools : (current?.connectorTools ?? null);
+    if (Boolean(connector) !== Boolean(tools?.length)) errors.push({ path: connector ? 'connectorTools' : 'connector', code: 'invalid:item:connector-tools', message: msg(L, 'invalid:item:connector-tools') });
+    const assignee = input.assignee ?? current?.assignee ?? 'me';
+    if (connector && assignee === 'me') errors.push({ path: 'assignee', code: 'invalid:item:connector-tools', message: msg(L, 'invalid:item:connector-tools') });
     if (input.parentId) {
       const parent = await this._repo.findOneBy({ id: input.parentId });
       if (!parent) errors.push({ path: 'parentId', code: 'not-found:item', message: msg(L, 'not-found:item') });
@@ -220,7 +212,7 @@ export class ItemsService {
   /** Scalar columns from an input (only the given fields); `date` falls back to the local day of `dueAt`. */
   private _columns(input: Partial<CreateItemInput>, ctx: RequestCtx): Partial<ItemEntity> {
     const out: Partial<ItemEntity> = {};
-    for (const key of ['body', 'priority', 'projectId', 'pending', 'parentId', 'recurrence', 'startsOn', 'endsOn', 'evaluation', 'subtasksOrder', 'source', 'date'] as const)
+    for (const key of ['body', 'connector', 'connectorTools', 'priority', 'projectId', 'pending', 'parentId', 'recurrence', 'startsOn', 'endsOn', 'evaluation', 'subtasksOrder', 'source', 'date'] as const)
       if (input[key] !== undefined) Object.assign(out, { [key]: input[key] });
     if (input.dueAt !== undefined) {
       out.dueAt = input.dueAt ? new Date(input.dueAt) : null;

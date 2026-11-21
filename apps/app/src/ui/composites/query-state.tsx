@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { AlertCircle } from 'lucide-react';
 import { tr } from '@/i18n';
+import { FlexRow } from '../layout/flex';
 import { Button } from '../primitives/button';
 import { Spinner } from '../primitives/spinner';
 import { EmptyState } from './empty-state';
@@ -13,16 +13,23 @@ import { EmptyState } from './empty-state';
 export function QueryState({ isLoading, error, onRetry, children }: { isLoading: boolean; error: unknown; onRetry?: () => void; children: ReactNode }) {
   if (isLoading)
     return (
-      <div className="flex justify-center py-12 text-muted">
-        <Spinner className="size-6" />
-      </div>
+      <FlexRow justify="center" className="py-12">
+        <Spinner size="lg" />
+      </FlexRow>
     );
   if (error)
     return (
       <EmptyState
-        icon={<AlertCircle className="size-8 text-danger" />}
+        icon="error"
+        tone="danger"
         title={tr((error as Error).message || 'Something went wrong')}
-        action={onRetry && <Button variant="secondary" onClick={onRetry}>{tr('Retry')}</Button>}
+        action={
+          onRetry && (
+            <Button variant="secondary" onClick={onRetry}>
+              {tr('Retry')}
+            </Button>
+          )
+        }
       />
     );
   return <>{children}</>;

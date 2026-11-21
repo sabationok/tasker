@@ -1,27 +1,32 @@
 import type { ReactNode } from 'react';
-import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { FlexBox } from '../layout/flex';
+import { Text } from '../primitives/text';
+import { Icon } from '../theme/icons';
 
 /**
  * @ui NavRow
- * @spec A tappable row: leading icon, label, value under it, trailing slot (chevron by default). Used for pickers in forms.
- * @keywords row, list item, picker trigger, setting, chevron
+ * @spec A form row: leading node, label, value under it, trailing slot (a chevron when tappable). Used for pickers and switches.
+ * @keywords row, picker trigger, setting, chevron
  */
-export function NavRow({ icon, label, value, trailing, onClick, className }: { icon?: ReactNode; label: string; value?: ReactNode; trailing?: ReactNode; onClick?: () => void; className?: string }) {
+export function NavRow({ icon, label, value, trailing, onClick }: { icon?: ReactNode; label: string; value?: ReactNode; trailing?: ReactNode; onClick?: () => void }) {
   const body = (
     <>
       {icon}
       <FlexBox fill gap="none" className="text-left">
-        <span className="text-[15px] font-medium text-fg">{label}</span>
-        {value !== undefined && <span className="truncate text-[13px] text-muted">{value}</span>}
+        <Text variant="strong">{label}</Text>
+        {value !== undefined && (
+          <Text variant="label" tone="muted" truncate>
+            {value}
+          </Text>
+        )}
       </FlexBox>
-      {trailing ?? (onClick && <ChevronRight className="size-4 text-muted" />)}
+      {trailing ?? (onClick && <Icon name="forward" className="text-muted" />)}
     </>
   );
-  const cls = cn('flex min-h-14 w-full items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2', className);
+  const cls = 'flex min-h-control-lg w-full items-center gap-3 rounded-control border border-line bg-surface px-row py-2';
   return onClick ? (
-    <button type="button" onClick={onClick} className={cn(cls, 'transition hover:bg-surface-2')}>
+    <button type="button" onClick={onClick} className={cn(cls, 'transition hover:bg-sunken')}>
       {body}
     </button>
   ) : (

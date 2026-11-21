@@ -1,21 +1,24 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
+import { Icon, type IconName } from '../theme/icons';
+import { Spinner } from './spinner';
 
 /**
  * @ui IconButton
- * @spec Square icon-only action; `label` is required (aria-label + title). tone: plain | accent.
- * @keywords icon button, close, more, menu, toolbar
+ * @spec Icon-only action; `label` is required (aria-label + title). tone: plain | accent | bare | danger.
+ * @keywords icon button, close, back, toolbar
  */
 const TONE = {
-  plain: 'bg-surface-2 text-fg hover:bg-line',
+  plain: 'bg-sunken text-fg hover:bg-line',
   accent: 'bg-accent text-accent-fg hover:opacity-90',
-  bare: 'bg-transparent text-muted hover:bg-surface-2',
+  bare: 'bg-transparent text-muted hover:bg-sunken',
+  danger: 'bg-transparent text-negative hover:bg-sunken',
 } as const;
 
-export function IconButton({ label, icon, tone = 'plain', className, type = 'button', ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; icon: ReactNode; tone?: keyof typeof TONE }) {
+export function IconButton({ label, icon, tone = 'plain', loading, className, type = 'button', ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; icon: IconName; tone?: keyof typeof TONE; loading?: boolean }) {
   return (
-    <button type={type} aria-label={label} title={label} className={cn('inline-flex size-9 shrink-0 items-center justify-center rounded-full transition disabled:opacity-40', TONE[tone], className)} {...rest}>
-      {icon}
+    <button type={type} aria-label={label} title={label} className={cn('inline-flex size-icon-btn shrink-0 items-center justify-center rounded-pill transition disabled:opacity-40', TONE[tone], className)} {...rest}>
+      {loading ? <Spinner /> : <Icon name={icon} size="md" />}
     </button>
   );
 }

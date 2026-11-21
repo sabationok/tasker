@@ -1,11 +1,11 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { intlLocale, tr } from '@/i18n';
 import { addDays, addMonths, addYears, formatDay, today } from '@/lib/dates';
 import { useAppQuery } from '@/lib/use-app-query';
-import { EmptyState, FlexBox, FlexRow, IconButton, ProgressBar, QueryState, SectionCard, Segmented } from '@/ui';
+import { EmptyState, FlexBox, FlexRow, IconButton, ProgressBar, QueryState, SectionCard, Segmented, StatTiles, Text } from '@/ui';
 import type { StatsPeriod, StatsScope } from '@/contracts/tasker';
+import { usePageAgent } from '@/lib/page-agent';
 import { useStats } from './stats.queries';
-import { StatTiles } from './components/stat-tiles';
+import { statsScope } from './assistant/stats.tools';
 import { DistributionBar } from './components/distribution-bar';
 import { ByDayChart } from './components/by-day-chart';
 import { OverTimeChart } from './components/over-time-chart';
@@ -24,6 +24,16 @@ export function StatsScreen() {
   const anchor = query.anchor ?? today();
   const stats = useStats({ period, anchor, scope });
   const s = stats.data;
+  usePageAgent(
+    statsScope({
+      period,
+      scope,
+      anchor,
+      data: s,
+      patch: (q) => patch(q),
+      shift: (n) => period !== 'all' && patch({ anchor: SHIFT[period](anchor, n) }),
+    }),
+  );
 
   return (
     <FlexBox gap="md">
@@ -48,18 +58,23 @@ export function StatsScreen() {
       />
       {s && (
         <FlexRow justify="between">
-          <IconButton label="‹" tone="bare" disabled={period === 'all'} icon={<ChevronLeft className="size-4" />} onClick={() => period !== 'all' && patch({ anchor: SHIFT[period](anchor, -1) })} />
-          <span className="text-[15px] font-semibold">
-            {formatDay(s.period.from, intlLocale)} – {formatDay(s.period.to, intlLocale)}
-          </span>
-          <IconButton label="›" tone="bare" disabled={period === 'all'} icon={<ChevronRight className="size-4" />} onClick={() => period !== 'all' && patch({ anchor: SHIFT[period](anchor, 1) })} />
+          <IconButton label={tr('Previous period')} tone="bare" disabled={period === 'all'} icon="prev" onClick={() => period !== 'all' && patch({ anchor: SHIFT[period](anchor, -1) })} />
+          <Text variant="strong">{`${formatDay(s.period.from, intlLocale)} – ${formatDay(s.period.to, intlLocale)}`}</Text>
+          <IconButton label={tr('Next period')} tone="bare" disabled={period === 'all'} icon="next" onClick={() => period !== 'all' && patch({ anchor: SHIFT[period](anchor, 1) })} />
         </FlexRow>
       )}
       <QueryState isLoading={stats.isLoading} error={stats.error} onRetry={() => stats.refetch()}>
         {s && (
           <>
             <SectionCard title={tr('Summary')}>
-              <StatTiles summary={s.summary} />
+              <StatTiles
+                items={[
+                  { label: tr('Success rate'), value: s.summary.successRate === null ? 'N/A' : `${Math.round(s.summary.successRate * 100)}%` },
+                  { label: tr('Completed'), value: s.summary.completed },
+                  { label: tr('Skipped'), value: s.summary.skipped },
+                  { label: tr('Failed'), value: s.summary.failed },
+                ]}
+              />
             </SectionCard>
             {scope !== 'tasks' && (
               <SectionCard title={tr('Habit progress summary')}>
@@ -68,15 +83,17 @@ export function StatsScreen() {
                 ) : (
                   s.habits.map((h) => (
                     <FlexBox key={h.id} gap="xs">
-                      <FlexRow justify="between" className="text-sm">
-                        <span className="font-medium">{h.name}</span>
-                        <span className="tabular-nums text-muted">{h.score === null ? '—' : `${Math.round(h.score * 100)}%`}</span>
+                      <FlexRow justify="between">
+                        <Text variant="strong">{h.name}</Text>
+                        <Text variant="label" tone="muted" numeric>
+                          {h.score === null ? '—' : `${Math.round(h.score * 100)}%`}
+                        </Text>
                       </FlexRow>
                       <ProgressBar percent={(h.score ?? 0) * 100} label={h.name} />
                       {h.goals.map((g) => (
-                        <span key={g.window} className="text-xs text-muted">
-                          {g.window}: {g.value} / {g.target} {tr(g.metric)}
-                        </span>
+                        <Text key={g.window} variant="caption" tone="muted">
+                          {`${g.window}: ${g.value} / ${g.target} ${tr(g.metric)}`}
+                        </Text>
                       ))}
                     </FlexBox>
                   ))

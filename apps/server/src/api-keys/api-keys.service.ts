@@ -41,6 +41,35 @@ export class ApiKeysService {
     return apiKey;
   }
 
+  /**
+   * Dev auth without a key: the identity row of a client that sent `X-Tasker-Client: <name>` (created once, name
+   * `header:<name>`), so drafts, MCP sessions and events still have an owner.
+   */
+  async headerIdentity(name: string, eventsUrl: string | null): Promise<ApiKeyEntity> {
+    const rowName = `header:${name}`;
+    const found = await this._repo.findOne({ where: { name: rowName, revokedAt: IsNull() }, select: { id: true, name: true, prefix: true, eventsUrl: true, webappSecret: true, createdAt: true, lastUsedAt: true, revokedAt: true } });
+    if (found) {
+      const webappSecret = deriveKeySecret('webapp', name);
+      if (found.eventsUrl !== eventsUrl || found.webappSecret !== webappSecret)
+        await this._repo.update(found.id, { eventsUrl, webappSecret, webhookSecret: deriveKeySecret('webhook', name) });
+      return { ...found, eventsUrl } as ApiKeyEntity;
+    }
+    const { apiKey } = await this.create(rowName, eventsUrl);
+    // Until real keys exist the header value stands in for the key in every derivation (webapp / webhook), so Mia can
+    // sign initData and verify webhooks with it (agreed with Mia, 2026-11-17).
+    await this._repo.update(apiKey.id, { webappSecret: deriveKeySecret('webapp', name), webhookSecret: deriveKeySecret('webhook', name) });
+    return apiKey;
+  }
+
+  /** Active keys with their webapp secrets (to verify a mini app's initData). */
+  listWebappSecrets(): Promise<ApiKeyEntity[]> {
+    return this._repo.find({ where: { revokedAt: IsNull() }, select: { id: true, name: true, webappSecret: true, eventsUrl: true, createdAt: true, lastUsedAt: true, revokedAt: true, prefix: true } });
+  }
+
+  getActive(id: string): Promise<ApiKeyEntity | null> {
+    return this._repo.findOneBy({ id, revokedAt: IsNull() });
+  }
+
   findMany(): Promise<ApiKeyEntity[]> {
     return this._repo.find({ order: { createdAt: 'ASC' } });
   }

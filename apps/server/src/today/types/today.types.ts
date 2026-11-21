@@ -14,6 +14,8 @@ export type TodayEntry = {
   title: string;
   type: 'task' | 'habit';
   category: CategoryRef | null;
+  /** Whose to-do: `me` or an agent's slug (habits are always the user's). */
+  assignee: string;
   priority: number | null;
   checklist?: { done: number; total: number };
   threads?: { done: number; total: number };
@@ -22,6 +24,9 @@ export type TodayEntry = {
   status?: 'done' | 'skipped' | 'failed';
   late?: boolean;
 };
+
+/** Filters of a day view; the category chip counts follow `assignee`. */
+export type TodayFilter = { categoryId?: string; assignee?: string };
 
 export type TodayView = {
   date: string;

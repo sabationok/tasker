@@ -8,13 +8,10 @@ export function Chip({ active, onClick, children, count }: { active?: boolean; o
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={cn(
-        'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition',
-        active ? 'border-accent bg-accent text-accent-fg' : 'border-line bg-surface text-fg hover:bg-surface-2',
-      )}
+      className={cn('inline-flex h-control-sm shrink-0 items-center gap-1.5 rounded-pill border px-3 text-label transition', active ? 'border-selected bg-selected text-selected-fg' : 'border-line bg-surface text-fg hover:bg-sunken')}
     >
       {children}
-      {count !== undefined && <span className={cn('text-xs', active ? 'opacity-80' : 'text-muted')}>{count}</span>}
+      {count !== undefined && <span className={cn('text-caption tabular-nums', !active && 'text-muted')}>{count}</span>}
     </button>
   );
 }

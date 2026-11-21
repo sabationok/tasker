@@ -1,7 +1,7 @@
 import type { ChecklistLineView } from '../../checklist/checklist.service';
 import type { ReminderView } from '../../reminders/reminders.service';
 import type { Recurrence } from '../../recurrence/recurrence.schema';
-import type { ItemEvaluation, ItemOwner, ItemSource, ItemStatus, ItemType, SubtasksOrder } from './item.types';
+import type { ItemEvaluation, ItemSource, ItemStatus, ItemType, SubtasksOrder } from './item.types';
 
 export type CategoryRef = { id: string; name: string; icon: string; color: string };
 
@@ -13,7 +13,14 @@ export type ItemView = {
   title: string;
   body: string | null;
   status: ItemStatus;
-  owner: ItemOwner;
+  /** `me` or an agent's slug. */
+  assignee: string;
+  /** `me` or an agent's slug. */
+  createdBy: string;
+  /** The hub connector an agent's to-do is about. */
+  connector: string | null;
+  /** The connector's tools it uses (matched by the hub). */
+  connectorTools: string[] | null;
   priority: number | null;
   date: string | null;
   dueAt: string | null;

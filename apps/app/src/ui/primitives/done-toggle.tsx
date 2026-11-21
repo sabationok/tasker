@@ -1,30 +1,32 @@
-import { Check, Minus, X } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { Icon, type IconName } from '../theme/icons';
 import { Spinner } from './spinner';
 
 /**
  * @ui DoneToggle
- * @spec Round done / not-done control for a Today row. state: open | done | partial | skipped | failed.
+ * @spec Done / not-done control for a row. state: open | done | partial | skipped | failed. Look comes from the `done` / `open` tokens.
  * @keywords checkbox, done, complete, toggle, check
  */
 export type DoneState = 'open' | 'done' | 'partial' | 'skipped' | 'failed';
 const LOOK: Record<DoneState, string> = {
-  open: 'border-2 border-line bg-surface-2',
-  done: 'bg-success text-white',
-  partial: 'border-2 border-success bg-success/15 text-success',
-  skipped: 'bg-surface-2 text-muted',
-  failed: 'bg-danger text-white',
+  open: 'border-2 border-open',
+  done: 'bg-done text-done-fg',
+  partial: 'border-2 border-done text-fg',
+  skipped: 'bg-sunken text-muted',
+  failed: 'border-2 border-negative text-negative',
 };
-const ICON: Record<DoneState, ReactNode> = {
-  open: null,
-  done: <Check className="size-4" strokeWidth={3} />,
-  partial: <Minus className="size-4" strokeWidth={3} />,
-  skipped: <Minus className="size-4" />,
-  failed: <X className="size-4" strokeWidth={3} />,
-};
+const GLYPH: Record<DoneState, IconName | null> = { open: null, done: 'check', partial: 'partial', skipped: 'partial', failed: 'failed' };
 
-export function DoneToggle({ state, onClick, label, busy, disabled }: { state: DoneState; onClick: () => void; label: string; busy?: boolean; disabled?: boolean }) {
+const BASE = 'inline-flex size-toggle shrink-0 items-center justify-center rounded-pill transition';
+
+/** @ui DoneMark @spec The same indicator, not interactive (inside a row that is the button). @keywords done mark, check indicator */
+export function DoneMark({ state, busy }: { state: DoneState; busy?: boolean }) {
+  const glyph = GLYPH[state];
+  return <span aria-hidden className={cn(BASE, LOOK[state])}>{busy ? <Spinner /> : glyph && <Icon name={glyph} />}</span>;
+}
+
+export function DoneToggle({ state, onClick, label, busy, disabled }: { state: DoneState; onClick?: () => void; label: string; busy?: boolean; disabled?: boolean }) {
+  const glyph = GLYPH[state];
   return (
     <button
       type="button"
@@ -32,9 +34,9 @@ export function DoneToggle({ state, onClick, label, busy, disabled }: { state: D
       aria-pressed={state === 'done'}
       disabled={busy || disabled}
       onClick={onClick}
-      className={cn('inline-flex size-8 shrink-0 items-center justify-center rounded-full transition disabled:opacity-50', LOOK[state])}
+      className={cn(BASE, 'disabled:opacity-50', LOOK[state])}
     >
-      {busy ? <Spinner /> : ICON[state]}
+      {busy ? <Spinner /> : glyph && <Icon name={glyph} />}
     </button>
   );
 }

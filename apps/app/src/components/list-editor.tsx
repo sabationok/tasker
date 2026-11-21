@@ -1,5 +1,4 @@
 import { useId, type ReactNode } from 'react';
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { tr } from '@/i18n';
 import { Button, Field, FlexBox, FlexRow, IconButton } from '@/ui';
 
@@ -29,18 +28,18 @@ export function ListEditor<T>({ items, onChange, makeNew, renderItem, addLabel, 
       {items.map((item, i) => (
         <Field key={i} label={itemLabel?.(i)} htmlFor={`${baseId}-${i}`}>
           <FlexRow gap="xs">
-            <div className="min-w-0 flex-1">{renderItem(item, (n) => onChange(items.map((x, j) => (j === i ? n : x))), `${baseId}-${i}`, i)}</div>
+            <FlexBox fill>{renderItem(item, (n) => onChange(items.map((x, j) => (j === i ? n : x))), `${baseId}-${i}`, i)}</FlexBox>
             {orderable && (
               <>
-                <IconButton label="↑" tone="bare" disabled={i === 0} icon={<ArrowUp className="size-4" />} onClick={() => move(i, -1)} />
-                <IconButton label="↓" tone="bare" disabled={i === items.length - 1} icon={<ArrowDown className="size-4" />} onClick={() => move(i, 1)} />
+                <IconButton label={tr('Move up')} tone="bare" disabled={i === 0} icon="move-up" onClick={() => move(i, -1)} />
+                <IconButton label={tr('Move down')} tone="bare" disabled={i === items.length - 1} icon="move-down" onClick={() => move(i, 1)} />
               </>
             )}
-            <IconButton label={tr('Delete')} tone="bare" className="text-danger" icon={<Trash2 className="size-4" />} onClick={() => onChange(items.filter((_, j) => j !== i))} />
+            <IconButton label={tr('Delete')} tone="danger" icon="delete" onClick={() => onChange(items.filter((_, j) => j !== i))} />
           </FlexRow>
         </Field>
       ))}
-      <Button variant="ghost" icon={<Plus className="size-4" />} onClick={() => onChange([...items, makeNew()])}>
+      <Button variant="ghost" icon="add" onClick={() => onChange([...items, makeNew()])}>
         {addLabel}
       </Button>
     </FlexBox>

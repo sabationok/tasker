@@ -1,6 +1,5 @@
 import { tr } from '@/i18n';
-import { cn } from '@/lib/cn';
-import { Field, FlexBox, FlexRow, Input, OptionList, Segmented } from '@/ui';
+import { Field, FlexBox, FlexRow, Input, OptionList, Segmented, ToggleGrid } from '@/ui';
 import type { Freq, Recurrence } from '@/contracts/tasker';
 
 /** A fresh value per frequency, with the server's defaults. */
@@ -25,7 +24,8 @@ const FREQ_LABEL: Record<Freq, string> = {
 };
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 
-const toggleIn = (xs: number[], x: number) => (xs.includes(x) ? xs.filter((v) => v !== x) : [...xs, x].sort((a, b) => a - b));
+const sorted = (xs: number[]) => [...xs].sort((a, b) => a - b);
+const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => ({ value: i + 1, label: String(i + 1) }));
 const int = (v: string, min: number, max: number) => Math.max(min, Math.min(max, Math.round(Number(v) || min)));
 
 /**
@@ -54,61 +54,31 @@ function FreqFields({ value: r, onChange }: { value: Recurrence; onChange: (r: R
     case 'hourly':
       return (
         <FlexRow gap="sm" align="end">
-          <Field label={tr('Every N hours')}>
+          <Field fill label={tr('Every N hours')}>
             <Input type="number" min={1} max={12} value={r.everyHours} onChange={(e) => onChange({ ...r, everyHours: int(e.target.value, 1, 12) })} />
           </Field>
-          <Field label={tr('From')}>
+          <Field fill label={tr('From')}>
             <Input type="time" value={r.from} onChange={(e) => onChange({ ...r, from: e.target.value })} />
           </Field>
-          <Field label={tr('To')}>
+          <Field fill label={tr('To')}>
             <Input type="time" value={r.to} onChange={(e) => onChange({ ...r, to: e.target.value })} />
           </Field>
         </FlexRow>
       );
     case 'weekly':
       return (
-        <div className="grid grid-cols-7 gap-1" role="group" aria-label={tr('Weekly')}>
-          {WEEKDAYS.map((d, i) => {
-            const on = r.weekdays.includes(i + 1);
-            return (
-              <button
-                key={d}
-                type="button"
-                aria-pressed={on}
-                onClick={() => {
-                  const next = toggleIn(r.weekdays, i + 1);
-                  if (next.length) onChange({ ...r, weekdays: next });
-                }}
-                className={cn('h-10 rounded-xl text-sm', on ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-fg')}
-              >
-                {tr(d)}
-              </button>
-            );
-          })}
-        </div>
+        <ToggleGrid
+          label={tr('Weekly')}
+          required
+          value={r.weekdays}
+          onChange={(v) => onChange({ ...r, weekdays: sorted(v) })}
+          options={WEEKDAYS.map((d, i) => ({ value: i + 1, label: tr(d) }))}
+        />
       );
     case 'monthly':
       return (
         <Field label={tr('Days of month')}>
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
-              const on = r.monthDays.includes(d);
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => {
-                    const next = toggleIn(r.monthDays, d);
-                    if (next.length) onChange({ ...r, monthDays: next });
-                  }}
-                  className={cn('h-9 rounded-lg text-sm', on ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-fg')}
-                >
-                  {d}
-                </button>
-              );
-            })}
-          </div>
+          <ToggleGrid label={tr('Days of month')} required value={r.monthDays} onChange={(v) => onChange({ ...r, monthDays: sorted(v) })} options={MONTH_DAYS} />
         </Field>
       );
     case 'every_n_days':

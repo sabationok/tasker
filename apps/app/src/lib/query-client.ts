@@ -6,7 +6,8 @@ import { ApiError } from './api/api-error';
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: true, staleTime: 15_000 } },
   mutationCache: new MutationCache({
-    onError: (e) => showToast(e instanceof ApiError ? `${e.message}` : 'Something went wrong', 'error'),
+    // `meta.silent`: the caller shows the error itself (e.g. field errors on a draft card).
+    onError: (e, _v, _c, m) => !m.meta?.silent && showToast(e instanceof ApiError ? `${e.message}` : 'Something went wrong', 'error'),
   }),
 });
 

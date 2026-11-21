@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom';
-import { Archive, ArchiveRestore } from 'lucide-react';
 import { tr } from '@/i18n';
 import { routes } from '@/lib/routes';
 import { useAppQuery } from '@/lib/use-app-query';
-import { Badge, EmptyState, FlexBox, FlexRow, FlexUl, IconButton, QueryState, Segmented } from '@/ui';
+import { Badge, EmptyState, FlexBox, IconButton, ListGroup, ListRow, ListRowMeta, QueryState, Segmented, Text } from '@/ui';
 import { CategoryIcon } from '@/features/categories/category-icon';
-import type { HabitView } from '@/contracts/tasker';
 import { EVALUATION_LABEL } from './habit.constants';
-import { useArchiveHabit, useHabits, useRestoreHabit } from './habits.queries';
+import { useNavigate } from 'react-router-dom';
+import { usePageAgent } from '@/lib/page-agent';
+import { useArchiveHabit, useCheckIn, useHabits, useRestoreHabit } from './habits.queries';
+import { habitsScope } from './assistant/habits.tools';
 
 type Tab = 'active' | 'archived';
 
@@ -19,6 +19,20 @@ export function HabitsScreen() {
   const archive = useArchiveHabit();
   const restore = useRestoreHabit();
   const list = habits.data ?? [];
+  const navigate = useNavigate();
+  const checkIn = useCheckIn();
+  usePageAgent(
+    habitsScope({
+      tab,
+      list: habits.data,
+      setTab: (t) => patch({ tab: t === 'active' ? undefined : t }),
+      openHabit: (id) => navigate(routes.habitEdit(id)),
+      newHabit: () => navigate(routes.habitNew()),
+      checkIn: checkIn.mutateAsync,
+      archive: archive.mutateAsync,
+      restore: restore.mutateAsync,
+    }),
+  );
   return (
     <FlexBox gap="md">
       <Segmented
@@ -33,43 +47,33 @@ export function HabitsScreen() {
         {list.length === 0 ? (
           <EmptyState title={tab === 'active' ? tr('No habits yet.') : tr('No archived habits.')} />
         ) : (
-          <FlexUl gap="xs" className="overflow-hidden rounded-2xl bg-surface">
+          <ListGroup label={tr('Habits')}>
             {list.map((h) => (
-              <li key={h.id} className="border-b border-line last:border-0">
-                <HabitListRow
-                  habit={h}
-                  action={
-                    tab === 'active' ? (
-                      <IconButton label={tr('Archive')} tone="bare" icon={<Archive className="size-4" />} disabled={archive.isPending} onClick={() => archive.mutate(h.id)} />
-                    ) : (
-                      <IconButton label={tr('Restore')} tone="bare" icon={<ArchiveRestore className="size-4" />} disabled={restore.isPending} onClick={() => restore.mutate(h.id)} />
-                    )
-                  }
-                />
-              </li>
+              <ListRow
+                key={h.id}
+                to={routes.habitEdit(h.id)}
+                leading={<CategoryIcon category={h.category} size="sm" />}
+                trailing={
+                  tab === 'active' ? (
+                    <IconButton label={tr('Archive')} tone="bare" icon="archive" disabled={archive.isPending} onClick={() => archive.mutate(h.id)} />
+                  ) : (
+                    <IconButton label={tr('Restore')} tone="bare" icon="restore" disabled={restore.isPending} onClick={() => restore.mutate(h.id)} />
+                  )
+                }
+              >
+                <Text variant="strong" truncate>
+                  {h.name}
+                </Text>
+                <ListRowMeta>
+                  <Badge tone="accent">{tr(EVALUATION_LABEL[h.evaluation])}</Badge>
+                  <Badge icon="periodic">{h.recurrence.freq}</Badge>
+                  {h.targetValue !== null && <Badge>{`${h.targetValue}${h.unit ? ` ${h.unit}` : ''}`}</Badge>}
+                </ListRowMeta>
+              </ListRow>
             ))}
-          </FlexUl>
+          </ListGroup>
         )}
       </QueryState>
     </FlexBox>
-  );
-}
-
-function HabitListRow({ habit, action }: { habit: HabitView; action: React.ReactNode }) {
-  return (
-    <FlexRow gap="sm" className="px-3 py-3">
-      <Link to={routes.habitEdit(habit.id)} className="flex min-w-0 flex-1 items-center gap-3">
-        <CategoryIcon category={habit.category} size={36} />
-        <FlexBox fill gap="xs">
-          <span className="truncate font-medium">{habit.name}</span>
-          <FlexRow gap="xs" wrap>
-            <Badge tone="accent">{tr(EVALUATION_LABEL[habit.evaluation])}</Badge>
-            <Badge>{habit.recurrence.freq}</Badge>
-            {habit.targetValue !== null && <Badge>{`${habit.targetValue}${habit.unit ? ` ${habit.unit}` : ''}`}</Badge>}
-          </FlexRow>
-        </FlexBox>
-      </Link>
-      {action}
-    </FlexRow>
   );
 }

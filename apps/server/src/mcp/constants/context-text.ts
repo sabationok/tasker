@@ -7,4 +7,4 @@ export const MCP_CONTEXT_TEXT = [
   'Today (get_today) shows the day\'s tasks, periodic tasks and habits; get_stats gives completion / failure stats.',
 ].join('\n');
 
-export const MCP_RESOURCE_URIS = { context: 'tasker://context', today: 'tasker://today', draftsPrefix: 'tasker://drafts/' } as const;
+export const MCP_RESOURCE_URIS = { context: 'tasker://context', today: 'tasker://today', draftsPrefix: 'tasker://drafts/', uiManifest: 'tasker://ui/manifest' } as const;

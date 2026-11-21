@@ -12,7 +12,7 @@ const localDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 const itemId = uuid.describe('The item (resolved with find_items by its title or #number)');
 const write = { readOnlyHint: false, destructiveHint: false } as const;
 const idem = { readOnlyHint: false, destructiveHint: false, idempotentHint: true } as const;
-const itemLookups = { project_id: 'find_projects', category_id: 'find_categories', tag_ids: 'find_tags', parent_id: 'find_items' };
+const itemLookups = { project_id: 'find_projects', category_id: 'find_categories', tag_ids: 'find_tags', parent_id: 'find_items', assignee: 'find_agents' };
 
 const occurrenceInput = z
   .object({

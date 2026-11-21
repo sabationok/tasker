@@ -24,6 +24,10 @@ export class AppException extends Error {
     return new AppException(HttpStatus.CONFLICT, code, message, [{ path, code, message }]);
   }
 
+  static forbidden(code: ErrorCode, message: string, path = ''): AppException {
+    return new AppException(HttpStatus.FORBIDDEN, code, message, [{ path, code, message }]);
+  }
+
   static unauthorized(): AppException {
     return new AppException(HttpStatus.UNAUTHORIZED, 'unauthorized:api-key', 'Missing, unknown or revoked API key');
   }

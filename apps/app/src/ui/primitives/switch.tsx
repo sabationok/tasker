@@ -10,9 +10,12 @@ export function Switch({ checked, onChange, label, disabled }: { checked: boolea
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={cn('relative h-7 w-12 shrink-0 rounded-full transition', checked ? 'bg-accent' : 'bg-line')}
+      className={cn('relative h-toggle w-[calc(var(--t-toggle)*1.75)] shrink-0 rounded-pill transition', checked ? 'bg-accent' : 'bg-line')}
     >
-      <span className={cn('absolute top-0.5 size-6 rounded-full bg-white shadow transition-all', checked ? 'left-[22px]' : 'left-0.5')} />
+      <span
+        className="absolute top-[3px] size-[calc(var(--t-toggle)-6px)] rounded-pill bg-surface shadow-raised transition-all"
+        style={{ left: checked ? 'calc(var(--t-toggle) * 0.75 + 3px)' : '3px' }}
+      />
     </button>
   );
 }

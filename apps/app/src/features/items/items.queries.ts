@@ -9,7 +9,7 @@ export const itemKeys = {
   one: (id: string) => [...itemKeys.all, 'one', id] as const,
 };
 
-export type ItemsQuery = { periodic?: boolean; open?: boolean; parentId?: string; type?: 'task' };
+export type ItemsQuery = { periodic?: boolean; open?: boolean; parentId?: string; type?: 'task'; assignee?: string; createdBy?: string };
 
 export const itemsQuery = (q: ItemsQuery) =>
   queryOptions({
@@ -20,7 +20,7 @@ export const itemsQuery = (q: ItemsQuery) =>
 export const itemQuery = (id: string) =>
   queryOptions({ queryKey: itemKeys.one(id), queryFn: ({ signal }) => api.get<ItemView>('/items', { id }, signal) });
 
-export const useItems = (q: ItemsQuery) => useQuery(itemsQuery(q));
+export const useItems = (q: ItemsQuery, enabled = true) => useQuery({ ...itemsQuery(q), enabled });
 export const useItem = (id: string | undefined) => useQuery({ ...itemQuery(id ?? ''), enabled: !!id });
 
 const write = <I, O>(fn: (input: I) => Promise<O>) => ({ mutationFn: fn, onSuccess: () => invalidateDomain() });
@@ -32,3 +32,4 @@ export const useCompleteItem = () => useMutation(write((t: OccurrenceTarget) => 
 export const useUncompleteItem = () => useMutation(write((t: OccurrenceTarget) => api.post<unknown>('/items/uncomplete', t)));
 export const useSplitItem = () => useMutation(write((dto: SplitInput) => api.post<unknown>('/items/split', dto)));
 export const useToggleChecklist = () => useMutation(write((dto: { id: string; date?: string }) => api.post<unknown>('/checklist/toggle', dto)));
+export const useSkipOccurrence = () => useMutation(write((t: OccurrenceTarget & { note?: string }) => api.post<unknown>('/items/skip', t)));

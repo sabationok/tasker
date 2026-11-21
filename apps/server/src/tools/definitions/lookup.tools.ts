@@ -23,5 +23,6 @@ export const lookupTools = (d: ToolDeps): ToolDef[] => [
   lookup('find_categories', 'Find categories (life areas: Health, Work, …) by name (a lookup for category_id).', ['категорія', 'сфера', 'category'], (q, l) => d.categories.lookup(q, l)),
   lookup('find_tags', 'Find tags by name (a lookup for tag_ids).', ['тег', 'мітка', 'tag'], (q, l) => d.tags.lookup(q, l)),
   lookup('find_items', 'Find open tasks, ideas and notes by #number or title words (a lookup for item_id / parent_id).', ['задача', 'запис', '#', 'task', 'item'], (q, l) => d.items.lookup(q, l)),
+  lookup('find_agents', 'Find who an item can be assigned to: me (the user) or an agent (a lookup for assignee; id = the slug).', ['агент', 'виконавець', 'кому', 'agent', 'assignee'], (q, l) => d.agents.lookup(q, l)),
   lookup('find_habits', 'Find active habits by name (a lookup for habit_id).', ['звичка', 'habit'], (q, l) => d.habits.lookup(q, l)),
 ];

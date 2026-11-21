@@ -15,7 +15,17 @@ export const useBatch = (batchId: string | undefined) => useQuery({ ...batchQuer
 
 const afterWrite = () => Promise.all([invalidateDomain(), queryClient.invalidateQueries({ queryKey: draftKeys.all })]);
 
-export const useSaveDraft = () => useMutation({ mutationFn: (draftId: string) => api.post<Record<string, unknown>>('/drafts/save', { draftId }), onSuccess: afterWrite });
-export const useDiscardDraft = () => useMutation({ mutationFn: (draftId: string) => api.post<unknown>('/drafts/discard', { draftId }), onSuccess: afterWrite });
+/** Save one draft as is, or with the edited `dto` (camelCase): the server re-validates and stores outcome + changes. */
+export type SaveDraftInput = { draftId: string; dto?: Record<string, unknown> };
+export const useSaveDraft = () =>
+  useMutation({
+    mutationFn: ({ draftId, dto }: SaveDraftInput) => api.post<Record<string, unknown>>('/drafts/save', dto ? { draftId, dto } : { draftId }),
+    onSettled: afterWrite,
+    meta: { silent: true },
+  });
+/** Dismiss with an optional reason (training signal). */
+export type DiscardDraftInput = { draftId: string; reason?: string };
+export const useDiscardDraft = () =>
+  useMutation({ mutationFn: ({ draftId, reason }: DiscardDraftInput) => api.post<unknown>('/drafts/discard', reason ? { draftId, reason } : { draftId }), onSettled: afterWrite });
 export const useSaveBatch = () =>
-  useMutation({ mutationFn: async (batchId: string) => (await api.post<{ results: SaveBatchResult }>('/drafts/save-batch', { batchId })).results, onSuccess: afterWrite });
+  useMutation({ mutationFn: async (batchId: string) => (await api.post<{ results: SaveBatchResult }>('/drafts/save-batch', { batchId })).results, onSettled: afterWrite });

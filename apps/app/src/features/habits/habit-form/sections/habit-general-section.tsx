@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { tr } from '@/i18n';
-import { Field, Input, NavRow, SectionCard, Switch } from '@/ui';
-import { DateRow } from '@/components/date-row';
+import { DateRow, Field, Input, NavRow, SectionCard, Switch } from '@/ui';
 import { PriorityRow } from '@/components/priority';
 import { CategoryRow } from '@/features/categories/category-row';
 import type { HabitFormValues } from '../habit-form.lib';

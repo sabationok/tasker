@@ -12,7 +12,7 @@ export function CategoryRow({ value, onChange }: { value: string | undefined; on
   const category = categories.find((c) => c.id === value) ?? categories.find((c) => c.isDefault);
   return (
     <>
-      <NavRow icon={<CategoryIcon category={category} size={36} />} label={tr('Category')} value={category?.name} onClick={() => setOpen(true)} />
+      <NavRow icon={<CategoryIcon category={category} size="sm" />} label={tr('Category')} value={category?.name} onClick={() => setOpen(true)} />
       <CategoryPickerSheet open={open} onClose={() => setOpen(false)} value={category?.id} onChange={onChange} />
     </>
   );

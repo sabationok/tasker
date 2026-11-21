@@ -24,7 +24,7 @@ async function boot() {
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <MinWidthGate>
-            <RouterProvider router={router} />
+            <RouterProvider router={router} future={{ v7_startTransition: true }} />
           </MinWidthGate>
         </ToastProvider>
       </QueryClientProvider>

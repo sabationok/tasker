@@ -25,7 +25,8 @@ export default defineConfig(({ command, mode }) => {
   const apiUrl = env.TASKER_API_URL ?? API_URL[stage];
   if (command === 'serve' && !apiUrl) throw new Error(`No API URL for STAGE=${stage}: set TASKER_API_URL`);
   return {
-    base: '/assistant/app/',
+    // Served by the tasker server at /assistant/app/; a static host (GitHub Pages) sets its own path via APP_BASE.
+    base: env.APP_BASE ?? '/assistant/app/',
     plugins: [react(), tailwindcss()],
     define: { 'import.meta.env.VITE_STAGE': JSON.stringify(stage) },
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },

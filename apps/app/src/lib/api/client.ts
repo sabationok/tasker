@@ -1,4 +1,4 @@
-import { ApiError, type FieldError } from './api-error';
+import { ApiError, NETWORK_ERROR, type FieldError } from './api-error';
 
 /**
  * The one fetch wrapper. Unwraps `{ statusCode, data }` and throws `ApiError` for `{ innerCode, errors[] }`.
@@ -21,6 +21,7 @@ function toQs(q?: Query): string {
 async function request<T>(method: string, path: string, opts: { query?: Query; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new ApiError(0, NETWORK_ERROR.offline, 'No network: the device is offline');
   let res: Response;
   try {
     res = await fetch(`${BASE}${path}${toQs(opts.query)}`, {
@@ -32,8 +33,11 @@ async function request<T>(method: string, path: string, opts: { query?: Query; b
     });
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e;
-    throw new ApiError(0, 'network', 'Server is not reachable');
+    throw new ApiError(0, NETWORK_ERROR.unreachable, 'No network: the tasker API is not reachable');
   }
+  // Not the tasker API (it always answers JSON): e.g. GitHub Pages' 404 page when no API is configured.
+  if (!res.headers.get('content-type')?.includes('application/json'))
+    throw new ApiError(res.status, NETWORK_ERROR.unreachable, 'No network: the tasker API is not reachable');
   const json = (await res.json().catch(() => null)) as
     | { statusCode?: number; data?: T; message?: string; innerCode?: string; errors?: FieldError[] }
     | null;

@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/api/api-error';
 import { createContext, useContext, useEffect, useRef } from 'react';
 import { host } from '../host';
 import { MAX_TOOLS } from './registry';
@@ -52,9 +53,12 @@ export function usePageAgent(scope: PageScope | null, transport: PageAgentTransp
       try {
         return await tool.run(args ?? {});
       } catch (e) {
-        // The API's own field errors (ApiError.errors) come back as the tool's errors.
-        const api = (e as { errors?: { path?: string; code?: string; message: string }[] }).errors;
-        if (Array.isArray(api) && api.length) return { ok: false, errors: api.map((x) => ({ path: x.path ?? '', code: x.code ?? 'invalid', message: x.message })) };
+        // The API's own field errors (ApiError.errors) come back as the tool's errors; otherwise its code
+        // (`network:offline` / `network:unreachable` when the API cannot be reached: nothing was read or saved).
+        if (e instanceof ApiError) {
+          if (e.errors.length) return { ok: false, errors: e.errors.map((x) => ({ path: x.path ?? '', code: x.code ?? 'invalid', message: x.message })) };
+          return { ok: false, errors: [{ path: '', code: e.innerCode, message: e.message }] };
+        }
         return { ok: false, errors: [{ path: '', code: 'error', message: e instanceof Error ? e.message : String(e) }] };
       }
     });

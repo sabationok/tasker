@@ -26,8 +26,11 @@ export type JsonObjectSchema = {
   additionalProperties: false;
 };
 
-/** MCP tool annotations. Without `readOnlyHint: true` the hub treats a page tool as persisting and asks the user first. */
-export type PageToolAnnotations = { title?: string; readOnlyHint?: boolean; destructiveHint?: boolean; idempotentHint?: boolean };
+/**
+ * MCP tool annotations, both hints always explicit (MCP's defaults are readOnlyHint false, destructiveHint true, so an
+ * omitted hint would mark every write as destructive). Without `readOnlyHint: true` the hub asks the user first.
+ */
+export type PageToolAnnotations = { title?: string; readOnlyHint: boolean; destructiveHint: boolean; idempotentHint?: boolean };
 
 /** What the host gets per tool (MCP tool shape). Names: `page_<element>_<verb>`. */
 export type PageToolSpec = {

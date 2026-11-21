@@ -22,7 +22,7 @@ export function toSpec(name: string, d: ToolDef): PageToolSpec {
     name,
     description: d.description,
     inputSchema: d.input ?? NO_ARGS,
-    annotations: { title: d.title, ...(d.readOnly ? { readOnlyHint: true } : {}), ...(d.destructive ? { destructiveHint: true } : {}) },
+    annotations: { title: d.title, readOnlyHint: !!d.readOnly, destructiveHint: !!d.destructive },
     ...(d._meta ? { _meta: d._meta } : {}),
   };
 }
@@ -62,17 +62,4 @@ export function defineScreenTools<const T extends Record<string, ToolDef>>(scree
       };
     },
   };
-}
-
-/** Logs every screen's declared tools at boot (one table, screen by screen); the page's whole tool list, in any host. */
-export function logScreenTools(): void {
-  const rows = [...SCREEN_TOOLS].flatMap(([screen, specs]) => specs.map((t) => ({ screen, ...toolLogRow(t) })));
-  console.info(`[page-agent] ${rows.length} page tools on ${SCREEN_TOOLS.size} screens:\n${rows.map((r) => `${r.screen} · ${r.name}${r.actions ? ` [${r.actions}]` : ''}`).join('\n')}`);
-  console.table(rows);
-}
-
-/** A tool for the console: only what it does beyond reading, as a list (`save`, `delete`); nothing for a read-only tool. */
-export function toolLogRow(t: PageToolSpec): { name: string; title: string; actions?: string } {
-  const actions = [!t.annotations.readOnlyHint && 'save', t.annotations.destructiveHint && 'delete'].filter(Boolean);
-  return { name: t.name, title: t.annotations.title ?? '', ...(actions.length && { actions: actions.join(', ') }) };
 }

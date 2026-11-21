@@ -1,5 +1,6 @@
-import { Body, Controller, HttpCode, Post, Res } from '@nestjs/common';
-import type { Response } from 'express';
+import { Body, Controller, HttpCode, Post, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { isLoopback } from '../common/helpers/is-loopback';
 import { z } from 'zod';
 import { Public } from '../api-keys/decorators/public.decorator';
 import { AppResponse } from '../common/http/app-response';
@@ -16,8 +17,8 @@ export class AppSessionController {
   @Public()
   @Post('session')
   @HttpCode(200)
-  async open(@Body(new ZodPipe(sessionBody)) body: { initData: string }, @Res({ passthrough: true }) res: Response) {
-    const { token, payload, session } = await this._sessions.open(body.initData);
+  async open(@Body(new ZodPipe(sessionBody)) body: { initData: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const { token, payload, session } = await this._sessions.open(body.initData, isLoopback(req.socket.remoteAddress));
     res.cookie(APP_SESSION_COOKIE, token, { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 30 * 60 * 1000 });
     return AppResponse.ok({ batchId: session.batchId, draftIds: session.draftIds, locale: payload.locale ?? null, theme: payload.theme ?? null });
   }

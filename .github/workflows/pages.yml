@@ -1,0 +1,50 @@
+# The mini app on GitHub Pages: built from `dev` as the dev stage (no Vercel). Static only — it calls the dev API at
+# the repository variable TASKER_API_BASE (that server must allow this origin: CORS + a cross-site session cookie).
+name: Pages (dev)
+
+on:
+  push:
+    branches: [dev]
+    paths: ['apps/app/**', 'pnpm-lock.yaml', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter app...
+      - run: pnpm --filter app build
+        env:
+          STAGE: dev
+          APP_BASE: /${{ github.event.repository.name }}/
+          VITE_TASKER_API_BASE: ${{ vars.TASKER_API_BASE }}
+      # SPA fallback: Pages serves 404.html for unknown paths, so deep links reach the router.
+      - run: cp apps/app/dist/index.html apps/app/dist/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

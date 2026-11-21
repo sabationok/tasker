@@ -1,0 +1,30 @@
+{
+  "name": "mcp-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "tasker's MCP App: the ui:// widget a host (Mia, Claude) renders for tasker's MCP tool results — the agent's drafts as task cards to record, edit or dismiss.",
+  "scripts": {
+    "dev": "dev-dashboard run -- vite",
+    "build": "tsc -p . && vite build",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "2.0.4",
+    "clsx": "2.1.1",
+    "lucide-react": "0.468.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.28.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.1.11",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.4",
+    "tailwindcss": "4.1.11",
+    "typescript": "5.7.2",
+    "vite": "6.0.3",
+    "vite-plugin-singlefile": "2.3.4"
+  }
+}

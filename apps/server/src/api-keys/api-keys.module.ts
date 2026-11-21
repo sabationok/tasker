@@ -1,0 +1,16 @@
+import { Global, Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ApiKeysController } from './api-keys.controller';
+import { ApiKeysService } from './api-keys.service';
+import { ApiKeyEntity } from './entities/api-key.entity';
+import { ApiKeyGuard } from './guards/api-key.guard';
+
+@Global()
+@Module({
+  imports: [TypeOrmModule.forFeature([ApiKeyEntity])],
+  controllers: [ApiKeysController],
+  providers: [ApiKeysService, ApiKeyGuard, { provide: APP_GUARD, useExisting: ApiKeyGuard }],
+  exports: [ApiKeysService, ApiKeyGuard],
+})
+export class ApiKeysModule {}

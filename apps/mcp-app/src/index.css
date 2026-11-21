@@ -1,0 +1,8 @@
+/* The mobile app's theme and Tailwind setup (tokens.css is the one design system), plus its sources for class scanning. */
+@import '../../app/src/index.css';
+@source '../../app/src';
+
+/* Inside a host iframe the page is a card in a chat: no page background of its own, height follows content. */
+html[data-embedded] body {
+  background: transparent;
+}

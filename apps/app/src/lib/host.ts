@@ -1,5 +1,6 @@
 import type { PageAgentContext, PageAgentEvent, PageAgentTransport, PageToolHandler, PageToolOutcome } from './page-agent/protocol';
 import { agentMonitor } from './page-agent/monitor';
+import { toolLogRow } from './page-agent/registry';
 
 /**
  * Host bridge (connector contract §5): one API over Mia (`window.Mia.WebApp`, also `window.MiaWebApp`),
@@ -125,7 +126,7 @@ function createHost() {
     const ctx = payload as PageAgentContext | undefined;
     const label = call === 'provideContext' && ctx ? `${ctx.screen} · ${ctx.tools.length} tools: ${ctx.tools.map((t) => t.name).join(', ')}` : '';
     console.info(`[page-agent] ${call}${bridge?.agent ? '' : ' (no host: no-op)'} ${label}`, payload ?? '');
-    if (call === 'provideContext' && ctx) console.table(ctx.tools.map((t) => ({ name: t.name, title: t.annotations.title ?? '', saves: !t.annotations.readOnlyHint })));
+    if (call === 'provideContext' && ctx) console.table(ctx.tools.map(toolLogRow));
   };
   const initData = bridge?.initData || readInitDataFromHash() || null;
   return {

@@ -4,6 +4,7 @@ import type { Request } from 'express';
 import { env } from '../../config/env';
 import { isValidTimeZone, type RequestCtx } from '../../common/context/request-context';
 import { AppException } from '../../common/http/app-exception';
+import { isLoopback } from '../../common/helpers/is-loopback';
 import { toLocale } from '../../common/i18n/messages';
 import { AgentsService } from '../../agents/agents.service';
 import { SettingsService } from '../../settings/settings.service';
@@ -50,8 +51,7 @@ export class ApiKeyGuard implements CanActivate {
   private async _headerClient(req: AuthedRequest): Promise<ApiKeyEntity | null> {
     const name = req.headers['x-tasker-client'];
     if (!env.TRUST_CLIENT_HEADER || typeof name !== 'string' || !/^[a-z0-9-]{1,32}$/.test(name)) return null;
-    const ip = req.socket.remoteAddress ?? '';
-    if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(ip)) return null;
+    if (!isLoopback(req.socket.remoteAddress)) return null;
     return this._keys.headerIdentity(name, env.CLIENT_HEADER_EVENTS_URL);
   }
 }

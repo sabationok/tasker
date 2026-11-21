@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import type IORedis from 'ioredis';
-import { ApiKeysService } from '../api-keys/api-keys.service';
+import { ApiKeysService, HEADER_KEY_PREFIX } from '../api-keys/api-keys.service';
 import type { ApiKeyEntity } from '../api-keys/entities/api-key.entity';
 import { AppException } from '../common/http/app-exception';
 import { REDIS } from '../common/redis/redis.module';
@@ -27,13 +27,14 @@ export class AppSessionService {
     @Inject(REDIS) private readonly _redis: IORedis,
   ) {}
 
-  async open(initData: string): Promise<{ token: string; payload: InitPayload; session: AppSession }> {
+  /** `fromLoopback`: a dev header key (forgeable secret, see ApiKeysService.listWebappSecrets) signs in only from this machine. */
+  async open(initData: string, fromLoopback: boolean): Promise<{ token: string; payload: InitPayload; session: AppSession }> {
     const [p64, s64] = initData.split('.');
     if (!p64 || !s64) throw AppException.unauthorized();
     const payloadBytes = Buffer.from(p64, 'base64url');
     const sig = Buffer.from(s64, 'base64url');
     const apiKey = await this._matchKey(payloadBytes, sig);
-    if (!apiKey) throw AppException.unauthorized();
+    if (!apiKey || (apiKey.name.startsWith(HEADER_KEY_PREFIX) && !fromLoopback)) throw AppException.unauthorized();
     let payload: InitPayload;
     try {
       payload = JSON.parse(payloadBytes.toString('utf8')) as InitPayload;
